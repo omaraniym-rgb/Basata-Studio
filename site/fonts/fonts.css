@@ -1,0 +1,41 @@
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/instrument-sans-400.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/instrument-sans-500.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/instrument-sans-600.woff2) format('woff2')}
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/instrument-sans-700.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/geist-mono-400.woff2) format('woff2')}
+@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/archivo-var.woff2) format('woff2')}
+@font-face{font-family:'Alex Brush';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/alex-brush-400.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/figtree-400.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/figtree-500.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/figtree-600.woff2) format('woff2')}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/figtree-700.woff2) format('woff2')}
+@font-face{font-family:'Rajdhani';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/rajdhani-500.woff2) format('woff2')}
+@font-face{font-family:'Rajdhani';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/rajdhani-600.woff2) format('woff2')}
+@font-face{font-family:'Rajdhani';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/rajdhani-700.woff2) format('woff2')}
+@font-face{font-family:'Ubuntu';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/ubuntu-400.woff2) format('woff2')}
+@font-face{font-family:'Ubuntu';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/ubuntu-500.woff2) format('woff2')}
+@font-face{font-family:'Ubuntu';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/ubuntu-700.woff2) format('woff2')}
+@font-face{font-family:'Prosto One';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/prosto-one-400.woff2) format('woff2')}
+@font-face{font-family:'Kanit';font-style:normal;font-weight:300;font-display:swap;src:url(/fonts/kanit-300.woff2) format('woff2')}
+@font-face{font-family:'Kanit';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/kanit-500.woff2) format('woff2')}
+@font-face{font-family:'Kanit';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/kanit-700.woff2) format('woff2')}
+@font-face{font-family:'Arizonia';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/arizonia-400.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/poppins-400.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/poppins-600.woff2) format('woff2')}
+@font-face{font-family:'Poppins';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/poppins-700.woff2) format('woff2')}
+@font-face{font-family:'Hind Siliguri';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/hind-siliguri-400.woff2) format('woff2')}
+@font-face{font-family:'Hind Siliguri';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/hind-siliguri-600.woff2) format('woff2')}
+@font-face{font-family:'Hind Siliguri';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/hind-siliguri-700.woff2) format('woff2')}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/oswald-400.woff2) format('woff2')}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/oswald-500.woff2) format('woff2')}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/oswald-700.woff2) format('woff2')}
+@font-face{font-family:'Tinos';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/tinos-400.woff2) format('woff2')}
+@font-face{font-family:'Tinos';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/tinos-700.woff2) format('woff2')}
+@font-face{font-family:'Overpass';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/overpass-400.woff2) format('woff2')}
+@font-face{font-family:'Overpass';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/overpass-700.woff2) format('woff2')}
+@font-face{font-family:'Raleway';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/raleway-400.woff2) format('woff2')}
+@font-face{font-family:'Raleway';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/raleway-700.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/inter-400.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/inter-700.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/geist-sans-400.woff2) format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/geist-sans-600.woff2) format('woff2')}
