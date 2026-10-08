@@ -5,6 +5,7 @@
 // v6: every brief is logged to D1 (binding BRIEFS → basata-briefs) so it can be put on the calendar.
 // v7: POST /subscribe {email} → Journal newsletter list (D1 table subscribers) + a one-line welcome.
 // v8: GET /comments?slug=… and POST /comments {slug,name,email,body} → Journal comments (D1 table comments). Members only: the email must be on the subscribers list. A comment stays hidden until the commenter clicks the confirm link sent to that email; then it is public and journal@ is told. GET /member?email= says whether an email has joined.
+// v9: POST /admin/link {email, base} → one-time sign-in link for the Journal editor (basata.studio/journal/write), only for EDITORS.
 // Secret needed: RESEND_API_KEY (Settings → Variables and Secrets). KV binding: LOVE → basata-love.
 const ALLOWED = ['https://basata.studio', 'https://www.basata.studio', 'https://basata-studio.pages.dev'];
 let LOGO_B64 = null;
@@ -14,13 +15,29 @@ const HELLO = 'Basata Studio <hello@basata.studio>';
 const JOURNAL = 'Basata Journal <journal@basata.studio>';
 const TPL = "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<meta name=\"color-scheme\" content=\"light\">\n<title>We have your brief \u2014 Basata Studio</title>\n</head>\n<body style=\"margin:0;padding:0;background:#f7f6f3;-webkit-text-size-adjust:100%\">\n<div style=\"display:none;max-height:0;overflow:hidden\">Thank you. Your brief is with us and we will reply within two working days.</div>\n<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"background:#f7f6f3\">\n<tr><td align=\"center\" style=\"padding:40px 16px\">\n  <table role=\"presentation\" width=\"560\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"width:100%;max-width:560px;background:#ffffff;border-radius:4px\">\n    <tr><td align=\"right\" style=\"padding:32px 32px 0\"><img src=\"cid:basata-logo\" width=\"44\" alt=\"Basata Studio\" style=\"display:block;width:44px;height:auto;border:0\"></td></tr>\n    <tr><td style=\"padding:40px 40px 0;font-family:Helvetica,Arial,sans-serif;color:#111111\">\n      <h1 style=\"margin:0 0 24px;font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-1px\">Thank you,<br>{{name}}.</h1>\n      <p style=\"margin:0 0 16px;font-size:16px;line-height:1.6;color:#111111\">Your brief for {{company}} has reached us.</p>\n      <p style=\"margin:0 0 16px;font-size:16px;line-height:1.6;color:#111111\">We read every brief ourselves. Within two working days, we will reply with a few questions or a time to talk.</p>\n      <p style=\"margin:0 0 32px;font-size:16px;line-height:1.6;color:#111111\">There is nothing more you need to do for now.</p>\n    </td></tr>\n    <tr><td style=\"padding:0 40px\"><div style=\"height:1px;background:#e8e6e1;line-height:1px;font-size:1px\">&nbsp;</div></td></tr>\n    <tr><td style=\"padding:24px 40px 44px;font-family:Helvetica,Arial,sans-serif\">\n      <p style=\"margin:0;font-size:15px;line-height:1.5;font-weight:700\"><a href=\"https://basata.studio\" style=\"color:#111111;text-decoration:none\">Basata Studio</a></p>\n    </td></tr>\n  </table>\n  <p style=\"margin:20px 0 0;font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:1.5;color:#9a9893\">You are receiving this because you sent a project brief at basata.studio.</p>\n</td></tr>\n</table>\n</body>\n</html>\n";
 const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function cors(origin){ const o = ALLOWED.includes(origin) ? origin : ALLOWED[0];
+const EDITORS = ['omarani@basata.studio', 'omaraniym@gmail.com'];
+const okOrigin = o => ALLOWED.includes(o) || /^https:\/\/([a-z0-9-]+\.)?basata-site\.pages\.dev$/.test(o);
+function cors(origin){ const o = okOrigin(origin) ? origin : ALLOWED[0];
   return {'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, Accept', 'Vary': 'Origin'}; }
 export default {
   async fetch(req, env) {
     const h = cors(req.headers.get('Origin') || '');
     if (req.method === 'OPTIONS') return new Response(null, {headers: h});
     const path = new URL(req.url).pathname;
+    if (path === '/admin/link' && req.method === 'POST') {  // Journal editor sign-in link
+      let b = {}; try { b = await req.json(); } catch {}
+      const em = String(b.email || '').trim().toLowerCase();
+      const base = String(b.base || '');
+      if (EDITORS.includes(em) && okOrigin(base) && env.BRIEFS && env.RESEND_API_KEY) {
+        const t = [...crypto.getRandomValues(new Uint8Array(32))].map(x=>x.toString(16).padStart(2,'0')).join('');
+        await env.BRIEFS.prepare("DELETE FROM admin_tokens WHERE expires_at < ?").bind(Date.now()).run();
+        await env.BRIEFS.prepare("INSERT INTO admin_tokens (token,email,kind,expires_at) VALUES (?,?,'link',?)").bind(t, em, Date.now() + 20*60000).run();
+        const link = base + '/journal/write/auth?t=' + t;
+        const hb = `<div style="background:#f7f6f3;padding:32px 16px"><table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;border-radius:4px" cellpadding="0" cellspacing="0"><tr><td style="padding:40px 36px;font:16px/1.6 Helvetica,Arial,sans-serif;color:#111"><h1 style="margin:0 0 14px;font:700 26px/1.1 Helvetica,Arial,sans-serif;letter-spacing:-.5px">Sign in to the Journal.</h1><p style="margin:0 0 26px;color:#55534e">This link opens your editor. It works once, for 20 minutes.</p><a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font:600 15px Helvetica,Arial,sans-serif;padding:14px 22px;border-radius:12px">Open the editor <span style="color:#ff6600">&#9679;</span></a><p style="margin:28px 0 0;font-size:13px;color:#8a877f">If you did not ask for this, ignore it. Nobody can sign in without the link.</p></td></tr></table></div>`;
+        try { await fetch('https://api.resend.com/emails', {method:'POST', headers:{'Authorization':'Bearer '+env.RESEND_API_KEY,'Content-Type':'application/json'}, body: JSON.stringify({from: JOURNAL, to:[em], subject:'Your Journal sign-in link', html: hb, text: 'Sign in to the Journal editor (works once, for 20 minutes):\n'+link})}); } catch {}
+      }
+      return Response.json({ok:true}, {headers: {...h, 'Cache-Control':'no-store'}});
+    }
     if (path === '/member' && req.method === 'GET') {      // is this email on the Journal list?
       const em = String(new URL(req.url).searchParams.get('email') || '').trim().toLowerCase();
       let ok = false;
