@@ -1,0 +1,15 @@
+{
+  // basata-form: brief relay, Journal newsletter and comments.
+  // The Resend key is a secret kept in Cloudflare (RESEND_API_KEY); it is never stored here.
+  "name": "basata-form",
+  "main": "index.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "kv_namespaces": [
+    { "binding": "LOVE", "id": "bf10acf1bb514bea9fe04e4a86460353" }
+  ],
+  "d1_databases": [
+    { "binding": "BRIEFS", "database_name": "basata-briefs", "database_id": "10964053-da46-432d-8d0d-76a3749fd15d" }
+  ],
+  "observability": { "enabled": true }
+}
