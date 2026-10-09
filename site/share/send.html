@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><title>Sending…</title>
+<body style="font:14px system-ui;padding:24px">Sending images…
+<script>
+(async function(){
+  var q=new URLSearchParams(location.search), files=(q.get('f')||'').split(',').filter(Boolean), dir=q.get('d')||'vision-made-visible';
+  if(!window.opener){document.body.textContent='Open from the editor.';return}
+  for (var i=0;i<files.length;i++){ if(!/^[\w.-]+$/.test(files[i])) continue;
+    var r=await fetch('/share/'+dir+'/'+files[i]); var b=await r.arrayBuffer();
+    window.opener.postMessage({basataFile:files[i], type:r.headers.get('Content-Type'), buf:b}, 'https://x.com', [b]); }
+  window.opener.postMessage({basataDone:true}, 'https://x.com'); setTimeout(function(){window.close()},500);
+})();
+</script>
