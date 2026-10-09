@@ -1,0 +1,13 @@
+# Cloudflare Pages project "basata-site": static files in site/, live Journal in functions/.
+name = "basata-site"
+pages_build_output_dir = "site"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "basata-briefs"
+database_id = "10964053-da46-432d-8d0d-76a3749fd15d"
+
+[[kv_namespaces]]
+binding = "MEDIA"
+id = "02bd48788ab44fc69fdf67b57407a06d"
