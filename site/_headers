@@ -1,0 +1,2 @@
+/share/*
+  Access-Control-Allow-Origin: *
