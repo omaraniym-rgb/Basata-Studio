@@ -701,9 +701,9 @@ document.addEventListener('click',function(e){if(bub&&!bub.contains(e.target))hi
 document.addEventListener('keydown',function(e){if(e.key==='Escape')hide()});
 addEventListener('scroll',hide,{passive:true});addEventListener('hashchange',hide);addEventListener('resize',hide);
 })();
-</script><script>/* ux-start: /#start opens the brief (Claude, 3 Oct 2026) */
+</script><script>/* ux-start: /#start opens the brief (3 Oct 2026) */
 (function(){function go(){if(location.hash!=='#start')return;history.replaceState(null,'','#home');setTimeout(function(){if(window.openDisc)openDisc()},500)}
-addEventListener('hashchange',go);if(document.readyState==='complete')go();else addEventListener('load',go)})();</script><script>/* ux-swipe: swiping across the site (Claude, 3 Oct 2026) */
+addEventListener('hashchange',go);if(document.readyState==='complete')go();else addEventListener('load',go)})();</script><script>/* ux-swipe: swiping across the site (3 Oct 2026) */
 (function(){var x0=0,y0=0,t0=0,ok=false,b=document.body;
 function busy(t){return t.closest('input,textarea,select,.disc,.dsc,[role="dialog"],.menu,.swipe')}
 addEventListener('touchstart',function(e){var t=e.touches[0];ok=e.touches.length===1&&!busy(e.target);x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});

@@ -422,7 +422,7 @@ body.locked{overflow:hidden}
 :root[data-theme="dark"] .whm{filter:brightness(0) invert(.94)}
 .tl .mk,.pj-hero .mk{background-size:contain}
 
-/* per-project colour + motion (Claude, 29 Sep 2026) */
+/* per-project colour + motion (29 Sep 2026) */
 .sheet:focus{outline:none}
 .pj{--pc:var(--fg);--pl:var(--tile);--pd:var(--tile)}
 .pj .pj-hero{background:var(--pl);overflow:hidden;transition:background-color .3s var(--ease)}
@@ -463,7 +463,7 @@ body.locked{overflow:hidden}
  }
 }
 
-/* story pages (Claude, 29 Sep 2026) */
+/* story pages (29 Sep 2026) */
 .chap{padding-top:clamp(96px,12vw,180px);padding-bottom:clamp(36px,4vw,60px);display:grid;gap:14px}
 .cp-n{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:10px}
 .chap .cp-n{color:var(--fg-2)}.chap .cp-n::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pc)}
@@ -514,11 +514,11 @@ body.locked{overflow:hidden}
  @supports (animation-timeline: view()){.pj .chap,.pj .sit,.pj .epi-t{animation:pj-in linear both;animation-timeline:view();animation-range:entry 0% entry 40%}}
 }
 
-/* tile year (Claude, 29 Sep 2026) */
+/* tile year (29 Sep 2026) */
 .tl .yr{position:absolute;top:14px;right:16px;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--fg-2);pointer-events:none}
 @media (max-width:560px){.tl .yr{top:10px;right:12px;font-size:10px}}
 
-/* review fixes (Claude, 29 Sep 2026) */
+/* review fixes (29 Sep 2026) */
 .tl{box-shadow:none}
 .tl .yr{opacity:0;transition:opacity .25s var(--ease)}
 .tl:hover .yr,.tl:focus-visible .yr{opacity:1}
@@ -528,7 +528,7 @@ body.locked{overflow:hidden}
 [data-live] .stp.cur{opacity:1}
 @media (prefers-reduced-motion:reduce){[data-live] .stp{transition:none}}
 
-/* principles 2x2, no strokes (Claude, 29 Sep 2026) */
+/* principles 2x2, no strokes (29 Sep 2026) */
 .pr-list,.pr-item,.pr-item+.pr-item,.pr-item:nth-child(n+3),.pr-item:nth-child(3){border:0}
 @media (min-width:641px){
  .pr-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(64px,8vw,120px) clamp(48px,8vw,140px);padding:clamp(24px,3vw,48px) 0}
@@ -540,7 +540,7 @@ body.locked{overflow:hidden}
 @media (max-width:640px){.pr-item{grid-template-areas:"s t" "s m" "s go";grid-template-rows:auto auto auto;align-items:start}.pr-item .shape{align-self:center}.pr-go{margin-top:8px}}
 .mail:hover,.mail:focus-visible{color:var(--accent)}
 
-/* full review (Claude, 29 Sep 2026) */
+/* full review (29 Sep 2026) */
 @media (min-width:900px){.rd{max-width:760px;margin-inline:auto}}
 .rd-b{max-width:none}
 .lyr .ch-pal div{padding-bottom:clamp(52px,6vw,72px)}
@@ -550,7 +550,7 @@ body.locked{overflow:hidden}
 .i-m-aadane-center{background-image:url(/i/962a90c7da6b.webp)}
 .i-m-aadane-center-dark{background-image:url(/i/fcd68660b8c4.webp)}
 
-/* signature close (Claude, 29 Sep 2026) */
+/* signature close (29 Sep 2026) */
 .epi.sig{background:var(--pl);color:var(--fg)}
 :root[data-theme="dark"] .epi.sig{background:var(--pd)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .epi.sig{background:var(--pd)}}
@@ -563,7 +563,7 @@ body.locked{overflow:hidden}
 .i-m-fey-decor-dark{background-image:url(/i/b2011e5a8278.webp)}
 .i-m-goobweyn{background-image:url(/i/ac375886eda9.webp)}
 .i-m-goobweyn-dark{background-image:url(/i/f802e222c026.webp)}
-/* family (Claude, 29 Sep 2026) */
+/* family (29 Sep 2026) */
 .fam{padding-bottom:clamp(40px,5vw,72px)}
 .fam-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
 .fam-g figure{margin:0;background:var(--bg);padding:clamp(18px,2.4vw,36px)}
@@ -572,12 +572,12 @@ body.locked{overflow:hidden}
 .fam-g figcaption b{display:block;font-size:clamp(20px,1.8vw,26px);font-weight:500;letter-spacing:-.02em;margin:22px 0 8px}
 .fam-g figcaption span{display:block;color:var(--fg-2);font-size:clamp(15px,1.15vw,17px);line-height:1.5;max-width:34ch}
 @media (max-width:760px){.fam-g{grid-template-columns:1fr}}
-/* bq (Claude, 29 Sep 2026) */ .cbody .bq{font-size:clamp(26px,3vw,44px);font-weight:500;letter-spacing:-.03em;line-height:1.1;max-width:20ch;margin:0}
+/* bq (29 Sep 2026) */ .cbody .bq{font-size:clamp(26px,3vw,44px);font-weight:500;letter-spacing:-.03em;line-height:1.1;max-width:20ch;margin:0}
 .i-m-rio-palace{background-image:url(/i/37c2ce85dd55.webp)}
 .i-m-rio-palace-dark{background-image:url(/i/f69cb3c2b3e0.webp)}
 .i-m-garowe-online{background-image:url(/i/43235aef20cb.webp)}
 .i-m-garowe-online-dark{background-image:url(/i/cd8493473106.webp)}
-/* flawless full logo (Claude) */ .pj .mk.wide{width:58%;height:38%}.plate .mk.wide{width:66%}.epi-m.wide{width:clamp(260px,34vw,480px);aspect-ratio:3/1}
+/* flawless full logo */ .pj .mk.wide{width:58%;height:38%}.plate .mk.wide{width:66%}.epi-m.wide{width:clamp(260px,34vw,480px);aspect-ratio:3/1}
 .i-m-rio-palace{background-image:url(/i/19e61e23205c.webp)}
 .i-m-rio-palace-dark{background-image:url(/i/9a0462bcdcfb.webp)}
 .i-m-bgs{background-image:url(/i/da0c4ee1dc5d.webp)}
@@ -585,7 +585,7 @@ body.locked{overflow:hidden}
 .i-m-sombank{background-image:url(/i/1a24c1c4e589.webp)}
 .i-m-sombank-dark{background-image:url(/i/5cdaaad45d44.webp)}
 
-/* case study (Claude, 29 Sep 2026) */
+/* case study (29 Sep 2026) */
 .cs{--ce:cubic-bezier(.16,1,.3,1)}
 .cs [data-r]{opacity:0;translate:0 42px;transition:opacity 1s var(--ce) var(--d,0s),translate 1.2s var(--ce) var(--d,0s)}
 .cs [data-r].on{opacity:1;translate:0 0}
@@ -735,7 +735,7 @@ body.locked{overflow:hidden}
 }
 @media (max-width:560px){.cs-proc-g{grid-template-columns:1fr}.cs-lks{grid-template-columns:1fr}}
 
-/* v2: simpler scroll, specimen, shots (Claude, 29 Sep 2026) */
+/* v2: simpler scroll, specimen, shots (29 Sep 2026) */
 .cs-ch{padding-top:clamp(72px,8vw,128px)!important}
 .cs-intro{padding-top:clamp(64px,7vw,112px)}
 .cs-anat-v{position:relative!important;top:0!important}
@@ -2890,15 +2890,15 @@ body.locked{overflow:hidden}
 </script>
 
 <script>
-/* case study reveal (Claude, 29 Sep 2026) */
+/* case study reveal (29 Sep 2026) */
 (function(){if(!('IntersectionObserver' in window)){[].forEach.call(document.querySelectorAll('.cs [data-r]'),function(x){x.classList.add('on')});return}
  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;var t=e.target;t.classList.add('on');io.unobserve(t)})},{rootMargin:'0px 0px -10% 0px',threshold:.05});
  [].forEach.call(document.querySelectorAll('.cs [data-r]'),function(x){io.observe(x)});})();
 </script><style id="polish">:root{--ease-out:cubic-bezier(.23,1,.32,1);--ease-io:cubic-bezier(.77,0,.175,1)}::selection{background:var(--accent,#f2541b);color:#fff}html{caret-color:var(--accent,#f2541b);scrollbar-color:color-mix(in oklab,currentColor 28%,transparent) transparent;-webkit-tap-highlight-color:transparent}:focus-visible{outline:2px solid var(--accent,#f2541b);outline-offset:3px;border-radius:4px}a{text-underline-offset:.22em;text-decoration-thickness:1px}h1,h2,h3,.cs-h1{text-wrap:balance}p,li,dd{text-wrap:pretty}time,.cap,.num,[class*="count"],.cs-hero-meta,.pager{font-variant-numeric:tabular-nums}.cs .cs-chips li,.cs .cs-ratio i{transition:transform 1s var(--ce) var(--d,0s),opacity 1s var(--ce) var(--d,0s),width 1s var(--ce) var(--d,0s),height 1s var(--ce) var(--d,0s),background-color 1s var(--ce) var(--d,0s)!important}button,.back,.theme,.dot{transition:transform 160ms var(--ease-out),background-color 200ms var(--ease-out),color 200ms var(--ease-out),opacity 200ms var(--ease-out)}button:active,.back:active,.theme:active,.dot:active{transform:scale(.97)}.tile .tl{transition:transform 200ms var(--ease-out)}.tile .tl:active{transform:scale(.985)}@media (hover:hover) and (pointer:fine){.tile .tl .im{transition:transform 420ms var(--ease-out)}.tile .tl:hover .im{transform:scale(1.02)}}.cs-con{grid-template-columns:1fr!important}.cs-con-v{aspect-ratio:16/10!important;background:transparent!important;width:100%}.cs-con-v svg{width:100%;height:100%;display:block}.nt-spin{padding-block:clamp(40px,6vw,96px)}.nt-spin-in{background:#fff;display:grid;place-items:center;aspect-ratio:16/9}.nt-spin-in svg{width:min(46vw,560px)!important;height:auto!important;animation:ntspin 36s linear infinite;transform-origin:50% 50%}@keyframes ntspin{to{transform:rotate(-360deg)}}.nt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1vw,14px);padding-block:clamp(40px,6vw,96px)}.nt-cell{aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden}.nt-cell img{width:78%;height:78%;object-fit:contain}@media (max-width:720px){.nt-grid{grid-template-columns:1fr 1fr}}@media (max-width:600px){.cs-sp-n{font-size:min(17vw,4.2rem)!important;overflow-wrap:anywhere}}.cs-sp{overflow-x:clip}@media (max-width:720px){.cs-hero[style*="--hfg:#ffffff"] .cs-hbg::after{content:"";position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,0))}.cs-hero[style*="--hfg:#ffffff"] h2{text-shadow:0 2px 28px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.25)}}#cnt,.pj-idx{display:none!important}.cs-hero{position:relative}.cs-hero .cs-hero-m{position:absolute!important;left:0;right:0;top:40%;margin:0 auto!important;padding:0!important;translate:0 -50%;z-index:1}@media (max-width:720px){.cs-hero .cs-hero-m{top:42%}}@media (max-width:600px){.cs-hero h2.cs-xl{font-size:min(8.6vw,40px)!important}}.cs-hero-t{display:flex!important;flex-wrap:nowrap;align-items:last baseline;justify-content:space-between;column-gap:32px}.cs-hero-t h2{order:1;flex:1 1 0;min-width:0}.cs-hero-t .cs-meta{order:2;display:flex!important;gap:28px;margin:0;align-self:last baseline;flex:0 0 auto}.cs-hero-t .cs-meta dt{display:none}.cs-hero-t .cs-meta dd{margin:0;font-weight:700;font-size:clamp(16px,1.35vw,19px);font-variant-numeric:tabular-nums}.cs-hero-t .cs-line{display:none}/* skills pass 1 Oct: Emil + Impeccable + Taste */#pj-ntp .cs-mk-v{width:min(84vw,780px)}#pj-ntp .cs-mk-v img{max-height:none}.cs-hero h2{font-size:clamp(44px,8vw,6rem)!important;letter-spacing:-.04em!important}.cs-hero h2.cs-long{font-size:clamp(36px,5.2vw,4.5rem)!important}[data-r]{translate:0 20px;transition:opacity .7s var(--ce) var(--d,0s),translate .9s var(--ce) var(--d,0s)}@keyframes cs-in{from{opacity:0;scale:.94;filter:blur(6px)}to{opacity:1;scale:1;filter:none}}.cs-sr figure:hover img{transform:none}@media (hover:hover) and (pointer:fine){.cs-sr figure img{transition:transform .5s var(--ease-out)}.cs-sr figure:hover img{transform:scale(1.02)}}.dot:hover::before{transform:none}@media (hover:hover) and (pointer:fine){.dot:hover::before{transform:scale(1.35)}}.pj-nav a{min-height:44px}@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}[data-r]{translate:none!important;transition:opacity .25s ease!important}}/* bgs-plain */#pj-bgs .cs-hbg{display:none}#pj-bgs>.cs-hero{background:#f5f3fb}#pj-bgs .bgs-mk-d{display:none}:root[data-theme="dark"] #pj-bgs>.cs-hero{background:#0d0a22;--hfg:#ece8ff;color:#ece8ff}:root[data-theme="dark"] #pj-bgs .cs-hero h2,:root[data-theme="dark"] #pj-bgs .cs-hero dd{color:#ece8ff!important}:root[data-theme="dark"] #pj-bgs .bgs-mk-d{display:block}:root[data-theme="dark"] #pj-bgs .bgs-mk-l{display:none}
-/* work-ux (Claude, 3 Oct 2026) */
+/* work-ux (3 Oct 2026) */
 /* no progress line, old school */
 .prog{display:none!important}
-/* love: the iOS ❤️, grows with every tap (Claude, 3 Oct 2026) */
+/* love: the iOS ❤️, grows with every tap (3 Oct 2026) */
 .pj .pj-nav{display:none!important}
 .pj-love{display:flex;justify-content:center;align-items:center;min-height:clamp(260px,40vh,420px);touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pj-love label{position:relative;display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -2910,7 +2910,7 @@ body.locked{overflow:hidden}
 @keyframes hl-pop{0%{transform:scale(1)}30%{transform:scale(.8)}65%{transform:scale(1.28)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.pj-love .pop .h{animation:none}}
 </style><script>(function(){var b=document.body,c=document.getElementById('bs-corner'),m=document.getElementById('bs-menu');function o(x){b.classList.toggle('bs-open',x);c.setAttribute('aria-expanded',x)}c.addEventListener('click',function(e){e.stopPropagation();o(!b.classList.contains('bs-open'))});document.addEventListener('click',function(e){if(b.classList.contains('bs-open')&&!e.target.closest('#bs-menu'))o(false)});document.addEventListener('keydown',function(e){if(e.key==='Escape')o(false)})})();</script><script>
-/* work-ux (Claude, 3 Oct 2026) */
+/* work-ux (3 Oct 2026) */
 (function(){var D=document;
  var sheet=D.getElementById('sheet');if(!sheet)return;
  /* the iOS ❤️ at the end of each project: every tap (or double tap nearby) grows it a little, up to double size */
