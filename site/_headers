@@ -1,2 +1,4 @@
 /share/*
   Access-Control-Allow-Origin: *
+/journal/vision-made-visible/spheres.gif
+  Access-Control-Allow-Origin: *
