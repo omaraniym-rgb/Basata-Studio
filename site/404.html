@@ -6,28 +6,61 @@
 <title>Page not found — Basata Studio</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.png" sizes="512x512">
+<meta name="theme-color" content="#f7f6f2" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#121211" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
-:root{--bg:#f7f6f2;--fg:#111110;--fg-2:#6b6963;--orange:#ff7200;--sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace}
-@media (prefers-color-scheme:dark){:root{--bg:#121211;--fg:#eceae6;--fg-2:#9a968f}}
+:root{--bg:#f7f6f2;--fg:#111110;--fg-2:#6b6963;--line:rgba(17,17,16,.12);--orange:#ff6600;--sans:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace;--ease:cubic-bezier(.23,1,.32,1)}
+@media (prefers-color-scheme:dark){:root{--bg:#121211;--fg:#eceae6;--fg-2:#9a968f;--line:#2a2927}}
 *{box-sizing:border-box}html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.5 var(--sans);display:flex;align-items:center;justify-content:center;padding:24px}
-main{max-width:520px;text-align:center}
-.mark{font:400 64px/1 var(--sans);color:var(--orange);margin:0 0 28px}
-h1{font-weight:500;font-size:clamp(26px,5vw,36px);line-height:1.15;margin:0 0 12px;text-wrap:balance}
-p{color:var(--fg-2);margin:0 0 32px}
-nav{display:flex;gap:24px;justify-content:center;font:500 13px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase}
-a{color:var(--fg);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px}
-a:hover{color:var(--orange)}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.5 var(--sans);display:grid;place-items:center;padding:24px;overflow:hidden}
+main{width:100%;max-width:560px;display:grid;justify-items:center;text-align:center;gap:0}
+.code{font:500 12px/1 var(--mono);letter-spacing:.14em;color:var(--fg-2);margin:0 0 20px}
+svg{width:min(340px,78vw);height:auto;overflow:visible;margin-bottom:28px}
+#stroke{fill:var(--fg)}
+#floor{stroke:var(--line);stroke-width:6}
+#dot{fill:var(--orange);transform-box:fill-box;transform-origin:center;cursor:pointer;
+  animation:fall 1.5s var(--ease) .9s both}
+@keyframes fall{
+  0%{transform:translate(0,0) rotate(0)}
+  12%{transform:translate(-6px,-18px) rotate(-4deg)}
+  45%{transform:translate(-300px,197px) rotate(-60deg)}
+  58%{transform:translate(-600px,80px) rotate(-200deg)}
+  72%{transform:translate(-860px,197px) rotate(-560deg)}
+  82%{transform:translate(-1000px,165px) rotate(-660deg)}
+  100%{transform:translate(-1300px,197px) rotate(-860deg)}}
+body.home #dot{animation:back .7s var(--ease) both}
+@keyframes back{from{transform:translate(-1300px,197px) rotate(-860deg)}to{transform:translate(0,0) rotate(0)}}
+h1{font-weight:500;font-size:clamp(28px,5.4vw,40px);line-height:1.12;letter-spacing:-.01em;margin:0 0 12px;text-wrap:balance}
+p.sub{color:var(--fg-2);margin:0 0 32px;max-width:36ch;text-wrap:balance}
+.put{font:500 15px/1 var(--sans);color:var(--bg);background:var(--fg);border:0;border-radius:999px;padding:16px 26px;display:inline-flex;align-items:center;gap:10px;cursor:pointer;transition:transform .2s var(--ease)}
+.put:hover{transform:translateY(-2px)}.put:active{transform:scale(.97)}
+.put i{width:10px;height:10px;border-radius:50%;background:var(--orange)}
+nav{margin-top:28px;display:flex;gap:24px;font:500 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+nav a{color:var(--fg-2);text-decoration:none;padding-bottom:3px;border-bottom:1px solid var(--line)}
+nav a:hover{color:var(--fg);border-color:currentColor}
+@media (prefers-reduced-motion:reduce){#dot{animation:none;transform:translate(-1300px,197px)}body.home #dot{animation:none;transform:none}}
 </style>
 </head>
 <body>
 <main>
-<p class="mark" aria-hidden="true">ب</p>
-<h1>This page is not here.</h1>
-<p>The address may have changed, or it never existed.</p>
-<nav><a href="/">Home</a><a href="/work/">Work</a><a href="/journal/">Journal</a></nav>
+<p class="code">404</p>
+<svg viewBox="-760 -240 1740 1160" role="img" aria-label="The Basata mark, its orange dot rolled away">
+  <line id="floor" x1="-740" y1="907" x2="960" y2="907"/>
+  <path id="stroke" d="M 795.960938 -142.128906 C 802.238281 -149.769531 813.152344 -151.710938 821.660156 -146.671875 C 863.515625 -121.875 891.816406 -97.335938 908.902344 -67.871094 C 927.984375 -34.980469 948.792969 8.160156 934.457031 58.78125 C 917.667969 118.046875 895.757812 151.550781 828.886719 204.179688 C 799.183594 227.554688 533.277344 416.101562 216.378906 466.398438 C 150.386719 476.875 86.445312 482.300781 17.878906 470.144531 C 8.285156 467.59375 0.628906 461.394531 -3.988281 453.433594 C -8.605469 445.472656 -10.191406 435.746094 -7.640625 426.148438 C -5.089844 416.550781 0.523438 407.675781 9.078125 404.28125 C 46.238281 389.519531 301.90625 291.628906 442.90625 184.699219 C 649.269531 28.199219 762.621094 -101.53125 795.960938 -142.128906"/>
+  <path id="dot" d="M 598.375 491.589844 C 622.964844 399.085938 717.886719 344.027344 810.390625 368.617188 C 902.894531 393.207031 957.949219 488.128906 933.363281 580.632812 C 908.773438 673.136719 813.851562 728.191406 721.347656 703.601562 C 628.84375 679.015625 573.785156 584.09375 598.375 491.589844"/>
+</svg>
+<h1>This page lost its dot.</h1>
+<p class="sub">Without its dot, our mark is just a line. Without the right address, this is just a page.</p>
+<button class="put" type="button"><i></i>Put it back, take me home</button>
+<nav><a href="/work/">Work</a><a href="/journal/">Journal</a></nav>
 </main>
+<script>
+(function(){
+  var go=function(){document.body.classList.add('home');setTimeout(function(){location.href='/'},matchMedia('(prefers-reduced-motion:reduce)').matches?0:750)};
+  document.querySelector('.put').addEventListener('click',go);
+  document.getElementById('dot').addEventListener('click',go);
+})();
+</script>
 </body>
 </html>
