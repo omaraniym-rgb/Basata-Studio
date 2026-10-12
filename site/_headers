@@ -2,3 +2,7 @@
   Access-Control-Allow-Origin: *
 /journal/vision-made-visible/spheres.gif
   Access-Control-Allow-Origin: *
+/email/*
+  X-Robots-Tag: noindex
+/share/*
+  X-Robots-Tag: noindex

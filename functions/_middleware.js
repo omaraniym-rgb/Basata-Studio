@@ -9,5 +9,12 @@ export async function onRequest(ctx) {
   if (host !== HOME && !host.endsWith('.pages.dev') && host !== 'localhost' && host !== '127.0.0.1') {
     return Response.redirect(`https://${HOME}${url.pathname}${url.search}`, 301);
   }
-  return ctx.next();
+  const res = await ctx.next();
+  // the pages.dev copy stays usable, but Google must only list basata.studio
+  if (host.endsWith('.pages.dev')) {
+    const r = new Response(res.body, res);
+    r.headers.set('X-Robots-Tag', 'noindex');
+    return r;
+  }
+  return res;
 }
