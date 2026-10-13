@@ -3,6 +3,7 @@
 @font-face{font-family:'Instrument Sans';font-style:normal;font-weight:600;font-display:swap;src:url(/fonts/instrument-sans-600.woff2) format('woff2')}
 @font-face{font-family:'Instrument Sans';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/instrument-sans-700.woff2) format('woff2')}
 @font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/geist-mono-400.woff2) format('woff2')}
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/geist-mono-400-ext.woff2) format('woff2');unicode-range:U+0100-017F}
 @font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-display:swap;src:url(/fonts/archivo-var.woff2) format('woff2')}
 @font-face{font-family:'Alex Brush';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/alex-brush-400.woff2) format('woff2')}
 @font-face{font-family:'Figtree';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/figtree-400.woff2) format('woff2')}
