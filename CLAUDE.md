@@ -28,11 +28,11 @@ Owner: Omar Yusuf (Omarani). Studio site: basata.studio. Drive folder "Basata 2.
 
 ## Code and deploys
 - Repo: https://github.com/omaraniym-rgb/Basata-Studio (main deploys on push).
-- `site/` + `functions/` + `lib/` → Pages project `basata-site` (basata.studio); `worker/` → Worker `basata-form`. The basata.so portfolio (Worker `basata-so`) is not in this repo yet.
+- `site/` + `functions/` + `lib/` → Pages project `basata-site` (basata.studio); `worker/` → Worker `basata-form`. `portfolio/` → Worker `basata-so` (basata.so, static assets in `portfolio/public`). `3d/` is the three.js + Playwright render engine; renders go to Drive.
 - Email roles: info@ receives briefs, hello@ talks to clients, journal@ runs newsletter and comments, press@ for press.
 - Journal articles live in D1 (`basata-briefs` → `articles`), images in KV (`basata-media`). Code only in git.
 - Never push to `main` without Omar's explicit yes. Work on branches.
 - Never commit secrets. RESEND_API_KEY is a Cloudflare secret.
 
 ## Migration status
-See plans/Basata 2.0 — Move to Code Plan.md. Done: snapshot (~/Backups), repo cloned, CLAUDE.md. The website already lives in git (GitHub), so Phase 2 reduces to checking it. Next: bring in portfolio (basata.so), 3d engine, content specs.
+See plans/Basata 2.0 — Move to Code Plan.md. Done: snapshot (~/Backups), repo cloned, CLAUDE.md. The website already lives in git (GitHub), so Phase 2 reduces to checking it. Portfolio and 3d engine are in. Next: content specs and brand tokens.
