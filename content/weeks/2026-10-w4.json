@@ -1,0 +1,31 @@
+{
+  "week": "W4 Systems made to scale",
+  "timezone": "Africa/Mogadishu",
+  "source": "Notion: Basata · Content · October 2026 (exported 2026-10-16; Notion stays the calendar for now)",
+  "posts": [
+    {
+      "slot": "2026-10-28 18:00",
+      "type": "Reel",
+      "format": "Reel",
+      "status": "Scripted",
+      "platforms": [
+        "Instagram",
+        "TikTok",
+        "Facebook",
+        "LinkedIn",
+        "X"
+      ],
+      "image_text": "Growth breaks brands\nthat live\nin one head.\nSystems set them free.\nRules free your team.\nWrite the rules.\nBuild the templates.\nCheck it every month.\nConsistency is a system, not a mood.\nCould your team build it without you?",
+      "title": "Systems, made to scale.",
+      "captions": {
+        "instagram_facebook": null,
+        "x": null,
+        "linkedin": null
+      },
+      "tiktok": null,
+      "files": [
+        "reel-w4.mp4"
+      ]
+    }
+  ]
+}
