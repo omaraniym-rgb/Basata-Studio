@@ -1,0 +1,196 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#000}#wrap{position:relative;overflow:hidden}canvas{display:block}#veil,#grain,#vig{position:absolute;inset:0;pointer-events:none}#grain{mix-blend-mode:overlay}</style>
+<div id="wrap"><div id="veil"></div><div id="vig"></div><div id="grain"></div></div>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+// Basata 3D engine v2: real materials, studio sweep / room sets, window-shadow light, AO, depth of field, grain.
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { buildOld } from './scenes_v1.js';
+import { buildNew } from './scenes_v2.js';
+
+const S = window.SPEC, V = S.view, W = V?V.ow:(S.w||1080), H = V?V.oh:(S.h||1350), DPR = S.dpr||1;
+// grounds. a = main object, b = accent, c = dark object, gr = floor, wall = backdrop
+const PAL = {
+  paper: {bg:0xf3efe7, gr:0xebe5da, wall:0xf1ece3, hemi:[0xffffff,0xd9d2c4,.75], sun:3.0, exp:1.0, a:0xf3efe8, b:0xe0642a, c:0x2b2926, key:0xfff3e4},
+  white: {bg:0xf6f5f2, gr:0xeeece8, wall:0xf4f3f0, hemi:[0xffffff,0xd8d4cc,.75], sun:3.1, exp:1.0, a:0xf2f1ee, b:0xe36b2c, c:0x2f2d2a, key:0xfff8ef},
+  bone:  {bg:0xece5d9, gr:0xe4dccd, wall:0xebe3d6, hemi:[0xfff8ee,0xcdbfa8,.75], sun:3.0, exp:1.0, a:0xf2ebe0, b:0xd9602a, c:0x2c2722, key:0xffeedb},
+  sand:  {bg:0xe8d6bd, gr:0xe0caab, wall:0xe6d3b8, hemi:[0xfff6ea,0xc9a77f,.8], sun:3.0, exp:1.0, a:0xf3e8da, b:0xd2581f, c:0x4a3524, key:0xffe7cc},
+  stone: {bg:0xdcdad6, gr:0xd2d0cb, wall:0xdad8d3, hemi:[0xffffff,0xb9b6b0,.75], sun:2.9, exp:1.0, a:0xecebe8, b:0xe0642a, c:0x2b2a28, key:0xfff6ec},
+  mist:  {bg:0xd9dcd8, gr:0xcfd3cf, wall:0xd7dad6, hemi:[0xf4f8f6,0xaeb4b0,.8], sun:2.8, exp:1.0, a:0xeceeeb, b:0xe0642a, c:0x2a2d2c, key:0xfffaf2},
+  orange:{bg:0xe9844b, gr:0xe98a52, wall:0xe8854c, hemi:[0xfff1e6,0xd9763d,.9], sun:2.5, exp:1.0, a:0xfbefe4, b:0xa8401a, c:0x5a2410, key:0xffe6cf},
+  clay:  {bg:0xc7765a, gr:0xc27052, wall:0xc6755a, hemi:[0xffeadd,0xa65a3e,.85], sun:2.6, exp:1.0, a:0xf2e2d4, b:0xf0a070, c:0x4a2416, key:0xffe2c8},
+  night: {bg:0x1b1a19, gr:0x22211f, wall:0x1e1d1c, hemi:[0x8a8780,0x111110,.45], sun:1.9, exp:.95, a:0xd9d6d0, b:0xe8743a, c:0x3a3835, key:0xffe3c4},
+  charcoal:{bg:0x2a2724, gr:0x2e2b28, wall:0x2b2825, hemi:[0x9a958c,0x141312,.4], sun:2.2, exp:.95, a:0xd8d3cb, b:0xe8743a, c:0x45413c, key:0xffdcb8},
+  sky:   {bg:0xe9e3d8, gr:0xe3cfb1, wall:0xe9e3d8, hemi:[0xf4f1ea,0xc9a77f,.85], sun:3.2, exp:1.0, a:0xf3ebe0, b:0xd9602a, c:0x3a2c22, key:0xffeedd},
+};
+const P = PAL[S.pal||'paper']; const DARK = ['night','charcoal'].includes(S.pal);
+const SET = S.set || 'open';
+const renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(DPR); renderer.setSize(W,H);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = (S.set==='sky')?THREE.PCFSoftShadowMap:THREE.VSMShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = (S.exp??P.exp);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const wrap=document.getElementById('wrap'); wrap.prepend(renderer.domElement); wrap.style.width=W+'px'; wrap.style.height=H+'px';
+const scene = new THREE.Scene(); scene.background = new THREE.Color(P.bg);
+if (SET==='open') scene.fog = new THREE.Fog(P.bg, S.fogNear??10, S.fogFar??60);
+if (SET==='sky') { // warm sky gradient behind an open ground
+  const cv=document.createElement('canvas'); cv.width=4; cv.height=256; const g=cv.getContext('2d'); const gr=g.createLinearGradient(0,0,0,256);
+  gr.addColorStop(0,'#d9dcd6'); gr.addColorStop(.55,'#ece4d6'); gr.addColorStop(1,'#f1e2c8'); g.fillStyle=gr; g.fillRect(0,0,4,256);
+  const t=new THREE.CanvasTexture(cv); t.colorSpace=THREE.SRGBColorSpace; scene.background=t; scene.fog=new THREE.Fog(0xf1e2c8, 18, 90); }
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = DARK?0.16:(S.env??0.3);
+const c = S.cam||{};
+const cam = new THREE.PerspectiveCamera((c.fov??30)*(S.fovMul||1), V?V.fw/V.fh:W/H, 0.1, 400);
+if (V) { const k=V.ow/V.cw; cam.setViewOffset(V.fw*k,V.fh*k,V.x*k,V.y*k,V.ow,V.oh); }
+cam.position.set(c.x??0, c.y??1.6, c.z??12); const tgt=new THREE.Vector3(c.tx??0, c.ty??1.2, c.tz??0); cam.lookAt(tgt);
+if (c.roll) cam.rotateZ(c.roll);
+
+// ---------- procedural textures ----------
+let seed = S.seed||7; const rnd = () => (seed = (seed*16807)%2147483647)/2147483647;
+const cvs=(n)=>{const v=document.createElement('canvas'); v.width=v.height=n; return v;};
+function noiseCanvas(n=512, oct=[[8,.5],[32,.3],[128,.2]], base=128, amp=1){ // layered value noise, grey
+  const v=cvs(n), g=v.getContext('2d'); g.fillStyle=`rgb(${base},${base},${base})`; g.fillRect(0,0,n,n);
+  for (const [cells,a] of oct){ const s=cvs(cells), sg=s.getContext('2d'), im=sg.createImageData(cells,cells);
+    for(let i=0;i<cells*cells;i++){ const r=Math.floor(rnd()*255); im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=r; im.data[i*4+3]=255; }
+    sg.putImageData(im,0,0); g.globalAlpha=a*amp; g.imageSmoothingEnabled=true; g.drawImage(s,0,0,n,n); }
+  g.globalAlpha=1; return v; }
+const texOf=(v,rep=1,srgb=false)=>{ const t=new THREE.CanvasTexture(v); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep,rep); t.anisotropy=8; if(srgb) t.colorSpace=THREE.SRGBColorSpace; return t; };
+const TX={};
+const plasterBump=()=>TX.pb??=texOf(noiseCanvas(512,[[64,.5],[256,.5]],128,1),2);
+const plasterRough=()=>TX.pr??=texOf(noiseCanvas(256,[[16,.6],[64,.4]],200,.35),1);
+function travertine(hex){ const n=1024,v=cvs(n),g=v.getContext('2d'); const col=new THREE.Color(hex); g.fillStyle='#'+col.getHexString(); g.fillRect(0,0,n,n);
+  for(let i=0;i<260;i++){ const y=rnd()*n, h=1+rnd()*10, d=(rnd()-.5)*.09; g.fillStyle=`rgba(${d>0?255:120},${d>0?245:100},${d>0?230:80},${Math.abs(d)*2.2})`; g.fillRect(0,y,n,h); }
+  for(let i=0;i<900;i++){ g.fillStyle=`rgba(90,72,55,${.12+rnd()*.25})`; const x=rnd()*n,y=rnd()*n,w=2+rnd()*9; g.beginPath(); g.ellipse(x,y,w,w*(.25+rnd()*.3),0,0,7); g.fill(); }
+  return v; }
+function woodGrain(hex){ const n=512,v=cvs(n),g=v.getContext('2d'),im=g.createImageData(n,n); const col=new THREE.Color(hex); const nz=noiseCanvas(128,[[8,1]],128,1).getContext('2d').getImageData(0,0,128,128).data;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){ const q=nz[((y>>2)*128+(x>>2))*4]/255; const r=Math.sin((x*0.06+q*9))*.5+.5; const k=.86+.14*Math.pow(r,3); const i=(y*n+x)*4;
+    im.data[i]=col.r*255*k; im.data[i+1]=col.g*255*k; im.data[i+2]=col.b*255*k; im.data[i+3]=255; } g.putImageData(im,0,0); return v; }
+function brushed(){ const n=512,v=cvs(n),g=v.getContext('2d'); g.fillStyle='#808080'; g.fillRect(0,0,n,n); for(let i=0;i<3000;i++){ const y=rnd()*n; g.fillStyle=`rgba(${rnd()>.5?255:0},${rnd()>.5?255:0},${rnd()>.5?255:0},.05)`; g.fillRect(0,y,n,1); } return v; }
+
+// ---------- materials ----------
+const MAT = S.mat||'plaster';
+function makeMat(kind, col){
+  const C=new THREE.Color(col);
+  switch(kind){
+    case 'ceramic': return new THREE.MeshPhysicalMaterial({color:C, roughness:.16, clearcoat:1, clearcoatRoughness:.08});
+    case 'travertine': return new THREE.MeshStandardMaterial({color:0xffffff, map:texOf(travertine(col),1,true), roughness:.78, bumpMap:plasterBump(), bumpScale:.6});
+    case 'clay': return new THREE.MeshStandardMaterial({color:C, roughness:.95, bumpMap:plasterBump(), bumpScale:1.4});
+    case 'metal': return new THREE.MeshPhysicalMaterial({color:C, metalness:1, roughness:.3, roughnessMap:texOf(brushed()), clearcoat:.2});
+    case 'chrome': return new THREE.MeshPhysicalMaterial({color:C, metalness:1, roughness:.06});
+    case 'oak': return new THREE.MeshStandardMaterial({color:0xffffff, map:texOf(woodGrain(col),1,true), roughness:.62});
+    case 'basalt': return new THREE.MeshStandardMaterial({color:C, roughness:.55, bumpMap:plasterBump(), bumpScale:.8});
+    case 'frost': return new THREE.MeshPhysicalMaterial({color:C, roughness:.32, transmission:1, thickness:1.6, ior:1.45, attenuationColor:C, attenuationDistance:4});
+    case 'glass': return new THREE.MeshPhysicalMaterial({color:0xffffff, roughness:.03, transmission:1, thickness:1.2, ior:1.5, clearcoat:1});
+    case 'paper': return new THREE.MeshPhysicalMaterial({color:C, roughness:1, sheen:.6, sheenRoughness:.8, sheenColor:new THREE.Color(0xffffff)});
+    case 'velvet': return new THREE.MeshPhysicalMaterial({color:C, roughness:1, sheen:1, sheenRoughness:.4, sheenColor:C.clone().offsetHSL(0,0,.2)});
+    case 'gloss': return new THREE.MeshPhysicalMaterial({color:C, roughness:.28, clearcoat:.8, clearcoatRoughness:.15});
+    case 'matte': return new THREE.MeshPhysicalMaterial({color:C, roughness:.55, clearcoat:.12, clearcoatRoughness:.6, sheen:.35, sheenColor:new THREE.Color(0xffffff)});
+    default: /* plaster */ return new THREE.MeshStandardMaterial({color:C, roughness:.88, roughnessMap:plasterRough(), bumpMap:plasterBump(), bumpScale:.35});
+  }
+}
+const MC={};
+const mat = (k) => { if (MC[k]) return MC[k];
+  if (k==='glass') return MC[k]=makeMat('glass',0xffffff);
+  if (k==='frost') return MC[k]=makeMat('frost',S.frostCol??0xf6efe6);
+  if (k==='b') return MC[k]=makeMat(S.accMat||'gloss', S.accCol??P.b);
+  if (k==='c') return MC[k]=makeMat(S.darkMat||'basalt', P.c);
+  if (k==='m') return MC[k]=makeMat('metal', 0xcfcac2);
+  if (k==='w') return MC[k]=makeMat('oak', 0xc79f74);
+  if (k==='p') return MC[k]=makeMat('paper', 0xf6f2ea);
+  if (k==='t') return MC[k]=makeMat('travertine', 0xe9dcc8);
+  if (k==='k') return MC[k]=makeMat('clay', 0xc4663f);
+  return MC[k]=makeMat(MAT, S.aCol??P.a); };
+
+// ---------- set ----------
+function sweepGeo(R, back, w=160){ // floor -> quarter curve -> wall, along z; extruded across x
+  const prof=[]; for(let z=60; z>back+R; z-=4) prof.push([z,0]); prof.push([back+R,0]);
+  const segs=Math.max(2,Math.round(R*8)); for(let i=1;i<=segs;i++){ const a=i/segs*Math.PI/2; prof.push([back+R-R*Math.sin(a), R-R*Math.cos(a)]); }
+  for(let y=R+4; y<80; y+=8) prof.push([back,y]); prof.push([back,80]);
+  const pos=[], uv=[], idx=[]; const nx=2; let acc=0;
+  prof.forEach((p,i)=>{ if(i) acc+=Math.hypot(p[0]-prof[i-1][0],p[1]-prof[i-1][1]); for(let j=0;j<=nx;j++){ const x=-w/2+w*j/nx; pos.push(x,p[1],p[0]); uv.push(x/6,acc/6);} });
+  for(let i=0;i<prof.length-1;i++) for(let j=0;j<nx;j++){ const a=i*(nx+1)+j, b=a+1, c2=a+(nx+1), d=c2+1; idx.push(a,b,c2, b,d,c2); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2)); g.setIndex(idx); g.computeVertexNormals(); return g; }
+const setMat = new THREE.MeshStandardMaterial({side:THREE.DoubleSide, color:P.gr, roughness:.96, bumpMap:plasterBump(), bumpScale:SET==='room'?.5:.15});
+let ground;
+if (SET==='cyc' || SET==='room') {
+  const R = SET==='room' ? (S.cornerR??.18) : (S.sweepR??9);
+  ground = new THREE.Mesh(sweepGeo(R, S.back??(SET==='room'?-3.2:-12)), setMat);
+  if (SET==='room') { setMat.color.set(P.wall); const fl=new THREE.Mesh(new THREE.PlaneGeometry(200,200), new THREE.MeshStandardMaterial({color:P.gr, roughness:.9, bumpMap:plasterBump(), bumpScale:.25})); fl.rotation.x=-Math.PI/2; fl.position.y=.001; fl.receiveShadow=true; scene.add(fl); }
+} else if (SET==='sky' && S.dunes) {
+  const g=new THREE.PlaneGeometry(300,300,220,220); const p=g.attributes.position; for(let i=0;i<p.count;i++){ const x=p.getX(i), y=p.getY(i); const dd=Math.hypot(x,y), fl=Math.min(1,Math.max(0,(dd-6)/14)); p.setZ(i, (Math.sin(x*.09+y*.03)*.9+Math.sin(x*.031-y*.07)*1.6+Math.sin(x*.21+y*.17)*.12)*fl*fl); } g.computeVertexNormals();
+  ground=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:P.gr, roughness:1, bumpMap:plasterBump(), bumpScale:.4})); ground.rotation.x=-Math.PI/2; ground.position.y=0;
+} else { ground = new THREE.Mesh(new THREE.PlaneGeometry(600,600), new THREE.MeshStandardMaterial({color:P.gr, roughness:1})); ground.rotation.x=-Math.PI/2; }
+ground.receiveShadow=true; scene.add(ground);
+
+// ---------- light ----------
+scene.add(new THREE.HemisphereLight(P.hemi[0],P.hemi[1],P.hemi[2]*(S.fill??1)));
+const L = S.light||{};
+function gobo(kind){ // light pattern a window would throw
+  const n=1024, v=cvs(n), g=v.getContext('2d'); g.fillStyle='#000'; g.fillRect(0,0,n,n); g.fillStyle='#fff'; g.filter='blur(5px)';
+  if (kind==='blinds'){ for(let i=0;i<14;i++){ g.fillRect(n*.12, n*.1+i*n*.058, n*.76, n*.036); } }
+  else if (kind==='window'){ const cw=n*.17, ch=n*.24; for(let i=0;i<3;i++)for(let j=0;j<2;j++) g.fillRect(n*.2+i*(cw+n*.03), n*.2+j*(ch+n*.03), cw, ch); }
+  else if (kind==='arch'){ for(let i=0;i<(S.arches??2);i++){ const cx=n*(.38+i*.24)-(S.arches===1?-n*.12:0), w=n*.16, top=n*.3; g.beginPath(); g.moveTo(cx-w/2,n*.85); g.lineTo(cx-w/2,top+w/2); g.arc(cx,top+w/2,w/2,Math.PI,0); g.lineTo(cx+w/2,n*.85); g.fill(); } }
+  else if (kind==='leaves'){ g.fillRect(0,0,n,n); g.fillStyle='#000'; g.filter='blur(9px)'; for(let i=0;i<70;i++){ const x=rnd()*n, y=rnd()*n*.75, r=12+rnd()*45; g.beginPath(); g.ellipse(x,y,r,r*.45,rnd()*3,0,7); g.fill(); } g.fillRect(0,n*.82,n,n*.2); g.fillRect(0,0,n*.12,n); g.fillRect(n*.88,0,n*.12,n); }
+  else if (kind==='slit'){ g.fillRect(n*.47,n*.05,n*.06,n*.9); }
+  else if (kind==='circle'){ g.beginPath(); g.arc(n/2,n/2,n*.28,0,7); g.fill(); }
+  else g.fillRect(n*.08,n*.08,n*.84,n*.84);
+  const t=new THREE.CanvasTexture(v); t.colorSpace=THREE.SRGBColorSpace; return t; }
+let key;
+if (S.gobo) {
+  key = new THREE.SpotLight(P.key, (L.i??P.sun)*(S.goboBoost??1.15), 0, L.angle??.42, L.pen??.12, 0);
+  key.map = gobo(S.gobo); key.position.set(L.x??-9, L.y??9, L.z??7); key.target.position.set(L.tx??0, L.ty??0, L.tz??-2); scene.add(key.target);
+  const f=new THREE.DirectionalLight(0xffffff,(L.fill??.35)); f.position.set(4,6,8); scene.add(f);
+} else { key = new THREE.DirectionalLight(P.key, L.i??P.sun); key.position.set(L.x??-5, L.y??8, L.z??5); const sc=key.shadow.camera; sc.left=-18; sc.right=18; sc.top=18; sc.bottom=-18; sc.near=.5; sc.far=90; }
+key.castShadow=true; key.shadow.mapSize.set(S.anim?2048:4096,S.anim?2048:4096); key.shadow.radius=L.soft??(S.gobo?6:14); key.shadow.blurSamples=S.anim?16:40; key.shadow.bias=-0.0003; key.shadow.normalBias=.03; scene.add(key);
+const rim=new THREE.DirectionalLight(DARK?0xff9a5c:0xffffff, DARK?.4:.32); rim.position.set(5,3,-6); scene.add(rim);
+
+// ---------- builders ----------
+const add = (g, k='a') => { const m=new THREE.Mesh(g, mat(k)); m.castShadow=true; m.receiveShadow=true; scene.add(m); return m; };
+const box = (w,h,d,k,x=0,y=null,z=0,r=.03) => { const m=add(new RoundedBoxGeometry(w,h,d,6,Math.min(r,w/2-.001,h/2-.001,d/2-.001)),k); m.position.set(x, y??h/2, z); return m; };
+const sph = (r,k,x=0,y=null,z=0) => { const m=add(new THREE.SphereGeometry(r,96,64),k); m.position.set(x,y??r,z); return m; };
+const cyl = (rt,rb,h,k,x=0,y=null,z=0,seg=96) => { const m=add(new THREE.CylinderGeometry(rt,rb,h,seg),k); m.position.set(x,y??h/2,z); return m; };
+const lathe = (pts,k,x=0,y=0,z=0) => { const m=add(new THREE.LatheGeometry(pts.map(p=>new THREE.Vector2(p[0],p[1])),128),k); m.position.set(x,y,z); return m; };
+const tube = (pts,r,k,closed=false,seg=300) => add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)),closed),seg,r,32,closed),k);
+const ext = (shape, depth, k, bev=.02) => add(new THREE.ExtrudeGeometry(shape,{depth, bevelEnabled:true, bevelSize:bev, bevelThickness:bev, bevelSegments:3, curveSegments:64}), k);
+const A=[]; const cl=x=>Math.max(0,Math.min(1,x)); const eo=x=>1-Math.pow(1-cl(x),3); const eio=x=>{x=cl(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const seg=(t,a,b)=>cl((t-a)/(b-a));
+const drop=(u)=>{u=cl(u); if(u<.55){const k=u/.55;return 1-k*k;} const k=(u-.55)/.45; return Math.abs(Math.sin(k*Math.PI*2))*.09*(1-k);};
+const ctx={THREE,S,P,o:S.opt||{},scene,cam,key,add,box,sph,cyl,lathe,tube,ext,mat,makeMat,A,cl,eo,eio,seg,drop,rnd,RoundedBoxGeometry,texOf,noiseCanvas};
+if (!buildNew(S.kind, ctx)) buildOld(S.kind, ctx);
+if (DARK && S.stars!==false && SET==='open') { const N=900,pos=new Float32Array(N*3); for(let i=0;i<N;i++){pos[i*3]=(rnd()-.5)*80;pos[i*3+1]=3+rnd()*30;pos[i*3+2]=-40-rnd()*10;}
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xd9d6d0,size:.18,transparent:true,opacity:.7,fog:false}))); }
+
+// ---------- post ----------
+let composer=null;
+try {
+  composer=new EffectComposer(renderer); composer.setPixelRatio(DPR); composer.setSize(W,H);
+  composer.addPass(new RenderPass(scene,cam));
+  if (S.ao!==false && SET!=='sky'){ const ao=new GTAOPass(scene,cam,W*DPR,H*DPR); ao.blendIntensity=S.aoI??.85; ao.updateGtaoMaterial({radius:S.aoR??.6, distanceExponent:1.5, thickness:1, scale:1, samples:S.anim?12:20}); ao.updatePdMaterial({lumaPhi:10, depthPhi:2, normalPhi:3, radius:6, rings:2, samples:S.anim?8:16}); composer.addPass(ao); }
+  if (S.dof){ const bk=new BokehPass(scene,cam,{focus:S.dof.focus??cam.position.distanceTo(tgt), aperture:S.dof.ap??.0012, maxblur:S.dof.max??.006}); composer.addPass(bk); }
+  composer.addPass(new OutputPass());
+} catch(e){ console.error('post off', e); composer=null; }
+// soft light pool, vignette, film grain (DOM layers so the screenshot carries them)
+document.getElementById('veil').style.background = DARK?'none':`radial-gradient(70% 45% at ${S.poolX??50}% ${S.poolY??32}%, rgba(255,250,240,${S.pool??.28}), rgba(0,0,0,0) 70%)`;
+document.getElementById('vig').style.background = `radial-gradient(120% 95% at 50% 42%, rgba(0,0,0,0) 58%, rgba(${DARK?'0,0,0':'60,40,20'},${S.vig??(DARK?.35:.12)}) 100%)`;
+{ const n=256, v=cvs(n), g=v.getContext('2d'), im=g.createImageData(n,n); for(let i=0;i<n*n;i++){ const r=128+(rnd()-.5)*255; im.data[i*4]=im.data[i*4+1]=im.data[i*4+2]=r; im.data[i*4+3]=255; } g.putImageData(im,0,0);
+  const gr=document.getElementById('grain'); gr.style.backgroundImage=`url(${v.toDataURL()})`; gr.style.backgroundSize=`${Math.round(n/DPR*1.2)}px`; gr.style.opacity=S.grain??(DARK?.10:.07); }
+
+const key0=key.position.clone(), cam0=cam.position.clone();
+window.frame=(t)=>{ A.forEach(f=>f(t));
+  const sw=(S.sweep??.12)*(1-eio(t)); const ca=Math.cos(sw), sa=Math.sin(sw);
+  key.position.set(key0.x*ca-key0.z*sa+(S.sweepX?(1-eio(t))*-S.sweepX:0), key0.y, key0.x*sa+key0.z*ca);
+  const dl=(S.dolly??.035)*(1-eio(t)); cam.position.copy(cam0).addScaledVector(cam0.clone().sub(tgt),dl); cam.lookAt(tgt); if(c.roll) cam.rotateZ(c.roll);
+  document.getElementById('grain').style.backgroundPosition=`${Math.floor(t*997)%97}px ${Math.floor(t*773)%89}px`;
+  if (composer) composer.render(); else renderer.render(scene,cam); };
+window.frame(S.anim ? (S.t??0) : (S.t??1));
+window.DONE=true;
+</script>

@@ -1,0 +1,31 @@
+{
+  "week": "W5 The year ahead",
+  "timezone": "Africa/Mogadishu",
+  "source": "Notion: Basata · Content · October 2026 (exported 2026-10-16; Notion stays the calendar for now)",
+  "posts": [
+    {
+      "slot": "2026-10-31 18:00",
+      "type": "Reel",
+      "format": "Reel",
+      "status": "Scripted",
+      "platforms": [
+        "Instagram",
+        "TikTok",
+        "Facebook",
+        "LinkedIn",
+        "X"
+      ],
+      "image_text": "A new year\nis coming.\nPlans are being made.\nStart with your brand.\nOne page. Three questions.\nWho are we for?\nWhat do we promise?\nDo we keep it?\nBuild what lasts.\nWhat will last in 2027?",
+      "title": "The year ahead.",
+      "captions": {
+        "instagram_facebook": null,
+        "x": null,
+        "linkedin": null
+      },
+      "tiktok": null,
+      "files": [
+        "reel-w5.mp4"
+      ]
+    }
+  ]
+}

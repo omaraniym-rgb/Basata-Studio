@@ -1,0 +1,31 @@
+{
+  "week": "W3 Identity made memorable",
+  "timezone": "Africa/Mogadishu",
+  "source": "Notion: Basata · Content · October 2026 (exported 2026-10-16; Notion stays the calendar for now)",
+  "posts": [
+    {
+      "slot": "2026-10-21 18:00",
+      "type": "Reel",
+      "format": "Reel",
+      "status": "Scripted",
+      "platforms": [
+        "Instagram",
+        "TikTok",
+        "Facebook",
+        "LinkedIn",
+        "X"
+      ],
+      "image_text": "People forget\nmost of\nwhat they see.\nThey remember what repeats.\nA mark is a promise you can see.\nOne shape.\nOne colour.\nEverywhere, every time.\nMemorable is a habit, not a logo.\nWhat do people remember about you?",
+      "title": "Identity, made memorable.",
+      "captions": {
+        "instagram_facebook": null,
+        "x": null,
+        "linkedin": null
+      },
+      "tiktok": null,
+      "files": [
+        "reel-w3.mp4"
+      ]
+    }
+  ]
+}
