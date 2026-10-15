@@ -1,3 +1,8 @@
+*.tar
+*.tgz
+*.zip
 .DS_Store
-node_modules/
+.dev.vars
+.env*
 .wrangler/
+node_modules/
