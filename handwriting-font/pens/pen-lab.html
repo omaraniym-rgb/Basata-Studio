@@ -1,0 +1,371 @@
+<title>Pen Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one big writing surface (the page you wrote on), a tray of pens and dials beneath it. */
+:root {
+  --bg: #e9ebe6;          /* desk */
+  --sheet: #f8f8f4;       /* paper */
+  --ink: #1b2130;         /* blue-black ink */
+  --ballpoint: #2b3fc4;   /* your actual ballpoint blue: accent */
+  --muted: #646a74;
+  --rule: #d3d6ce;
+  --chip: #ffffff;
+  --display-ar: "Aref Ruqaa", "IBM Plex Sans Arabic", serif;
+  --ui: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121419; --sheet: #1a1d24; --ink: #ebe7dc; --ballpoint: #8f9dff;
+    --muted: #9aa0ab; --rule: #2d313a; --chip: #22262e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121419; --sheet: #1a1d24; --ink: #ebe7dc; --ballpoint: #8f9dff;
+  --muted: #9aa0ab; --rule: #2d313a; --chip: #22262e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; }
+header h1 { margin: 0; font-family: var(--display-ar); font-weight: 700; font-size: clamp(34px, 5vw, 52px); line-height: 1.1; direction: rtl; }
+header .en { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+header p { margin: 0; flex-basis: 100%; color: var(--muted); max-width: 62ch; }
+
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.sheet-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { font: 500 14px var(--ui); color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.tab span { font-family: "IBM Plex Sans Arabic", var(--ui); }
+.tab[aria-pressed="true"] { color: var(--ink); border-color: var(--rule); background: var(--chip); }
+.ghost { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; }
+.ghost input { accent-color: var(--ballpoint); width: 16px; height: 16px; }
+.stage { position: relative; padding: 18px; }
+#paper { display: block; width: 100%; height: auto; touch-action: pan-y; }
+
+.tray { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .tray { grid-template-columns: minmax(0, 1fr); } }
+
+.pens { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 18px; }
+.pen { text-align: left; background: var(--chip); color: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 12px 9px; cursor: pointer; display: grid; gap: 2px; font-family: var(--ui); }
+.pen b { font-weight: 600; font-size: 14px; }
+.pen small { color: var(--muted); font-size: 12px; }
+.pen canvas { width: 100%; height: 26px; margin-bottom: 4px; }
+.pen[aria-pressed="true"] { border-color: var(--ballpoint); box-shadow: inset 0 0 0 1px var(--ballpoint); }
+.pen .star { color: var(--ballpoint); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+
+.dials { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px 28px; }
+.dial label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.dial label output { font-family: var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.dial input[type=range] { width: 100%; accent-color: var(--ballpoint); margin: 6px 0 2px; }
+.dial .ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+
+.nib { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: grid; gap: 10px; }
+.nib h2 { margin: 0; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+#nibview { width: 100%; height: 150px; display: block; }
+.recipe { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; padding: 8px 10px; border-radius: 4px; background: var(--bg); overflow-wrap: anywhere; user-select: all; }
+.copy { justify-self: start; font: 500 13px var(--ui); background: var(--ink); color: var(--sheet); border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+button:focus-visible, input:focus-visible, label:focus-within { outline: 2px solid var(--ballpoint); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>مختبر القلم</h1>
+    <span class="en">Pen Lab</span>
+    <p>Your own handwriting, re-inked by a different pen. The letter shapes stay yours. Only the nib changes. Drag the dials until it feels right.</p>
+  </header>
+
+  <section class="sheet" aria-label="Writing sample">
+    <div class="sheet-bar">
+      <div class="tabs" id="tabs" role="group" aria-label="Sample"></div>
+      <label class="ghost"><input type="checkbox" id="ghost"> Show what you wrote underneath</label>
+    </div>
+    <div class="stage"><canvas id="paper" aria-label="Handwriting rendered with the selected pen"></canvas></div>
+  </section>
+
+  <section class="tray">
+    <div>
+      <div class="pens" id="pens" role="group" aria-label="Pens"></div>
+      <div class="dials">
+        <div class="dial">
+          <label for="contrast">Contrast <output id="o-contrast"></output></label>
+          <input type="range" id="contrast" min="1" max="3" step="0.05">
+          <div class="ends"><span>round pen</span><span>reed qalam</span></div>
+        </div>
+        <div class="dial">
+          <label for="weight">Weight <output id="o-weight"></output></label>
+          <input type="range" id="weight" min="0.6" max="2.2" step="0.05">
+          <div class="ends"><span>fine</span><span>bold</span></div>
+        </div>
+        <div class="dial">
+          <label for="angle">Nib angle <output id="o-angle"></output></label>
+          <input type="range" id="angle" min="0" max="90" step="1">
+          <div class="ends"><span>0° flat</span><span>90° upright</span></div>
+        </div>
+        <div class="dial">
+          <label for="smooth">Smoothing <output id="o-smooth"></output></label>
+          <input type="range" id="smooth" min="0" max="2.5" step="0.05">
+          <div class="ends"><span>every wobble</span><span>calm</span></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="nib" aria-label="Current nib">
+      <h2>The nib</h2>
+      <canvas id="nibview"></canvas>
+      <div class="recipe" id="recipe"></div>
+      <button class="copy" id="copy" type="button">Copy settings</button>
+      <p class="hint">Send me these numbers and I'll build the font with this pen.</p>
+    </aside>
+  </section>
+</div>
+
+<script src="lab_data.js"></script>
+<script>
+(() => {
+  const PRESETS = [
+    { id: 'ballpoint', name: 'Your ballpoint', sub: 'exactly as written', original: true },
+    { id: 'round', name: 'Round marker', sub: 'even line, smoothed', c: 1.0, w: 1.15, a: 68, s: 1.0 },
+    { id: 'sweet', name: 'Sweet spot', sub: 'a little qalam', c: 1.6, w: 1.15, a: 68, s: 1.0, star: true },
+    { id: 'callig', name: 'Calligraphic', sub: 'clearer thick/thin', c: 2.1, w: 1.2, a: 70, s: 1.1 },
+    { id: 'qalam', name: 'Full qalam', sub: 'Waseem-like contrast', c: 3.0, w: 1.25, a: 72, s: 1.2 },
+  ];
+  const $ = id => document.getElementById(id);
+  const state = { sample: 0, preset: 'sweet', original: false, c: 1.6, w: 1.15, a: 68, s: 1.0, ghost: false };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('penlab') || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem('penlab', JSON.stringify(state)); } catch (e) {} };
+
+  // ---- decode samples ----
+  const samples = window.PEN_SAMPLES.map(sm => {
+    const bin = atob(sm.strokes), buf = new Int16Array(bin.length / 2);
+    for (let i = 0; i < buf.length; i++) buf[i] = (bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8)) << 16 >> 16;
+    const strokes = [];
+    for (let i = 0; i < buf.length;) {
+      const n = buf[i], closed = !!buf[i + 1]; i += 2;
+      const p = new Float32Array(2 * n);
+      for (let j = 0; j < 2 * n; j++) p[j] = buf[i + j] / sm.up;
+      strokes.push({ p, closed }); i += 2 * n;
+    }
+    const img = new Image(); img.src = sm.ink;
+    img.onload = () => { tintCache.clear(); draw(); };
+    return { ...sm, strokes, img, smoothCache: new Map() };
+  });
+  if (state.sample >= samples.length) state.sample = 0;
+
+  // ---- smoothing: resample every 0.5px, gaussian along the stroke, pin both ends ----
+  function smoothStroke({ p, closed }, sigmaPx) {
+    let pts = [];
+    for (let i = 0; i < p.length; i += 2) pts.push([p[i], p[i + 1]]);
+    if (closed) pts.push(pts[0]);
+    const d = [0];
+    for (let i = 1; i < pts.length; i++) d.push(d[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const L = d[d.length - 1], step = 0.5;
+    if (L < 1 || sigmaPx <= 0) return pts;
+    const q = []; let k = 0;
+    for (let t = 0; t <= L; t += step) {
+      while (k < d.length - 2 && d[k + 1] < t) k++;
+      const u = (t - d[k]) / ((d[k + 1] - d[k]) || 1);
+      q.push([pts[k][0] + u * (pts[k + 1][0] - pts[k][0]), pts[k][1] + u * (pts[k + 1][1] - pts[k][1])]);
+    }
+    const sg = sigmaPx / step, R = Math.ceil(3 * sg), ker = [];
+    let ks = 0;
+    for (let i = -R; i <= R; i++) { const v = Math.exp(-i * i / (2 * sg * sg)); ker.push(v); ks += v; }
+    const n = q.length, out = new Array(n);
+    for (let i = 0; i < n; i++) {
+      let x = 0, y = 0;
+      for (let j = -R; j <= R; j++) {
+        let m = i + j;
+        if (closed) m = ((m % n) + n) % n; else m = Math.max(0, Math.min(n - 1, m));
+        x += q[m][0] * ker[j + R]; y += q[m][1] * ker[j + R];
+      }
+      out[i] = [x / ks, y / ks];
+    }
+    if (!closed) {
+      const span = 2.5 * sg, dx0 = q[0][0] - out[0][0], dy0 = q[0][1] - out[0][1];
+      const dx1 = q[n - 1][0] - out[n - 1][0], dy1 = q[n - 1][1] - out[n - 1][1];
+      for (let i = 0; i < n; i++) {
+        const wa = Math.max(0, 1 - i / span), wb = Math.max(0, 1 - (n - 1 - i) / span);
+        out[i][0] += wa * dx0 + wb * dx1; out[i][1] += wa * dy0 + wb * dy1;
+      }
+    }
+    return out;
+  }
+  function smoothed(sm) {
+    const key = state.s.toFixed(2);
+    if (!sm.smoothCache.has(key)) sm.smoothCache.set(key, sm.strokes.map(st => smoothStroke(st, state.s * sm.w)));
+    return sm.smoothCache.get(key);
+  }
+
+  // ---- oval nib sweep: stroke with a round pen in a squashed space, then stretch back ----
+  function inkPath(ctx, strokes, scale, d, c, angDeg, color) {
+    const a = d / 2 * Math.sqrt(c), b = d / 2 / Math.sqrt(c), k = a / b;
+    const th = angDeg * Math.PI / 180, ux = Math.cos(th), uy = -Math.sin(th);
+    const M = [1 + (k - 1) * ux * ux, (k - 1) * ux * uy, (k - 1) * ux * uy, 1 + (k - 1) * uy * uy];
+    const ik = 1 / k - 1;
+    const Mi = [1 + ik * ux * ux, ik * ux * uy, ik * ux * uy, 1 + ik * uy * uy];
+    ctx.save();
+    ctx.setTransform(scale * M[0], scale * M[2], scale * M[1], scale * M[3], 0, 0);
+    ctx.lineWidth = 2 * b; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (const s of strokes) {
+      for (let i = 0; i < s.length; i++) {
+        const x = Mi[0] * s[i][0] + Mi[1] * s[i][1], y = Mi[2] * s[i][0] + Mi[3] * s[i][1];
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      if (s.length === 1) ctx.lineTo(Mi[0] * s[0][0] + Mi[1] * s[0][1] + 0.01, Mi[2] * s[0][0] + Mi[3] * s[0][1]);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const tintCache = new Map();
+  function tinted(sm, color) {
+    const key = sm.id + color;
+    if (!tintCache.has(key) && sm.img.complete && sm.img.naturalWidth) {
+      const c = document.createElement('canvas'); c.width = sm.W; c.height = sm.H;
+      const x = c.getContext('2d'); x.drawImage(sm.img, 0, 0);
+      x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, sm.W, sm.H);
+      tintCache.set(key, c);
+    }
+    return tintCache.get(key);
+  }
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const paper = $('paper'), pctx = paper.getContext('2d');
+
+  function draw() {
+    const sm = samples[state.sample];
+    const box = paper.parentElement.clientWidth - 36;
+    const dpr = window.devicePixelRatio || 1, scale = box / sm.W;
+    paper.width = Math.round(box * dpr); paper.height = Math.round(sm.H * scale * dpr);
+    paper.style.height = (sm.H * scale) + 'px';
+    pctx.setTransform(1, 0, 0, 1, 0, 0); pctx.clearRect(0, 0, paper.width, paper.height);
+    const ink = css('--ink'), blue = css('--ballpoint');
+    if (state.ghost && !state.original) {
+      const t = tinted(sm, blue);
+      if (t) { pctx.globalAlpha = 0.28; pctx.drawImage(t, 0, 0, paper.width, paper.height); pctx.globalAlpha = 1; }
+    }
+    if (state.original) {
+      const t = tinted(sm, ink);
+      if (t) pctx.drawImage(t, 0, 0, paper.width, paper.height);
+    } else {
+      inkPath(pctx, smoothed(sm), scale * dpr, state.w * sm.w, state.c, state.a, ink);
+    }
+    drawNib();
+    drawPenSwatches();
+  }
+
+  // ---- nib preview: the oval itself, plus one flat and one upright stroke ----
+  function drawNib() {
+    const cv = $('nibview'), dpr = window.devicePixelRatio || 1;
+    const W = cv.clientWidth, H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+    const ink = css('--ink'), muted = css('--muted');
+    if (state.original) {
+      x.fillStyle = muted; x.font = '13px ' + css('--ui');
+      x.fillText('Ballpoint: a round ball,', 10, H / 2 - 8);
+      x.fillText('same width in every direction.', 10, H / 2 + 12);
+      return;
+    }
+    // the nib tip, enlarged, with its angle
+    const d = 40, a = d / 2 * Math.sqrt(state.c), b = d / 2 / Math.sqrt(state.c);
+    x.save(); x.translate(50, H / 2 - 8); x.rotate(-state.a * Math.PI / 180);
+    x.beginPath(); x.ellipse(0, 0, a, b, 0, 0, Math.PI * 2); x.fillStyle = ink; x.fill();
+    x.restore();
+    x.fillStyle = muted; x.font = '11px ' + css('--mono');
+    x.textAlign = 'center'; x.fillText(state.a + '° tip', 50, H - 8); x.textAlign = 'start';
+    // what it does: an upright stroke, a flat stroke, and a curve
+    const L = Math.min(W - 120, 150), x0 = W - L - 12;
+    const strokes = [[[x0, 28], [x0, H - 30]], [[x0 + 22, H - 30], [x0 + L, H - 30]]];
+    const arc = [];
+    for (let t = 0; t <= 1.0001; t += 0.02) arc.push([x0 + 22 + (L - 22) / 2 + (L - 30) / 2 * Math.cos(Math.PI * t), 70 - 40 * Math.sin(Math.PI * t)]);
+    strokes.push(arc);
+    inkPath(x, strokes, dpr, 14, state.c, state.a, ink);
+  }
+
+  // ---- pen chips with a tiny stroke sample each ----
+  function drawPenSwatches() {
+    const ink = css('--ink');
+    document.querySelectorAll('.pen canvas').forEach(cv => {
+      const p = PRESETS.find(q => q.id === cv.dataset.id), dpr = window.devicePixelRatio || 1;
+      const W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+      cv.width = W * dpr; cv.height = H * dpr;
+      const x = cv.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
+      const wave = []; for (let t = 0; t <= 1.0001; t += 0.02) wave.push([8 + t * (W - 16), H / 2 + 7 * Math.sin(t * Math.PI * 2.2)]);
+      if (p.original) inkPath(x, [wave], dpr, 2, 1, 0, ink);
+      else inkPath(x, [wave], dpr, 3.2 * p.w, p.c, p.a, ink);
+    });
+  }
+
+  // ---- controls ----
+  const tabs = $('tabs');
+  samples.forEach((sm, i) => {
+    const b = document.createElement('button'); b.className = 'tab'; b.type = 'button';
+    b.innerHTML = `<span>${sm.label}</span>`;
+    b.onclick = () => { state.sample = i; sync(); };
+    tabs.appendChild(b);
+  });
+  const pens = $('pens');
+  PRESETS.forEach(p => {
+    const b = document.createElement('button'); b.className = 'pen'; b.type = 'button'; b.dataset.id = p.id;
+    b.innerHTML = `<canvas data-id="${p.id}"></canvas>${p.star ? '<span class="star">my pick</span>' : ''}<b>${p.name}</b><small>${p.sub}</small>`;
+    b.onclick = () => {
+      state.preset = p.id; state.original = !!p.original;
+      if (!p.original) Object.assign(state, { c: p.c, w: p.w, a: p.a, s: p.s });
+      sync();
+    };
+    pens.appendChild(b);
+  });
+  const dials = { contrast: 'c', weight: 'w', angle: 'a', smooth: 's' };
+  const fmt = { c: v => v.toFixed(2) + '×', w: v => v.toFixed(2) + '×', a: v => v + '°', s: v => v.toFixed(2) };
+  for (const [id, k] of Object.entries(dials)) {
+    $(id).addEventListener('input', e => {
+      state[k] = parseFloat(e.target.value); state.original = false;
+      const m = PRESETS.find(p => !p.original && Math.abs(p.c - state.c) < .001 && Math.abs(p.w - state.w) < .001 && p.a === state.a && Math.abs(p.s - state.s) < .001);
+      state.preset = m ? m.id : null;
+      sync();
+    });
+  }
+  $('ghost').addEventListener('change', e => { state.ghost = e.target.checked; sync(); });
+
+  function recipe() {
+    return state.original ? 'pen: ballpoint as written'
+      : `pen: contrast ${state.c.toFixed(2)} · weight ${state.w.toFixed(2)} · angle ${state.a}° · smoothing ${state.s.toFixed(2)}`;
+  }
+  $('copy').addEventListener('click', () => {
+    const t = recipe(), btn = $('copy');
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy settings', 1400); };
+    navigator.clipboard?.writeText(t).then(done, () => {
+      const r = document.createRange(); r.selectNodeContents($('recipe'));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Selected: press copy';
+    }) ?? (() => {})();
+  });
+
+  let raf = 0;
+  function sync() {
+    for (const [id, k] of Object.entries(dials)) { $(id).value = state[k]; $('o-' + id).textContent = fmt[k](state[k]); }
+    $('ghost').checked = state.ghost;
+    [...tabs.children].forEach((b, i) => b.setAttribute('aria-pressed', i === state.sample));
+    [...pens.children].forEach(b => b.setAttribute('aria-pressed', state.original ? b.dataset.id === 'ballpoint' : b.dataset.id === state.preset));
+    $('recipe').textContent = recipe();
+    save();
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(draw);
+  }
+
+  new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); }).observe(paper.parentElement);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { tintCache.clear(); draw(); });
+  new MutationObserver(() => { tintCache.clear(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  document.fonts?.ready.then(() => draw());
+  sync();
+})();
+</script>
