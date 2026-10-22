@@ -13,7 +13,7 @@ from names import BASE, PRES, OFF
 from punctuation import SHAPES
 from seams import seam
 
-T_JOIN = 47          # one connector thickness for the whole font (px at R_W=44)
+T_JOIN = 49          # one connector thickness for the whole font (px at R_W=44)
 SIDES = {'init': ('left',), 'medi': ('left', 'right'), 'fina': ('right',)}
 
 FAMILY = sys.argv[1] if len(sys.argv) > 1 else 'Omar Hand'
@@ -66,7 +66,7 @@ def synth(shape, U):
     return img, left, left + shape['w'] * s, base
 
 
-def main(stage2='stage2r.pkl', out='OmarHand'):
+def main(stage2='stage3.pkl', out='OmarHand'):
     D = pickle.load(open(stage2, 'rb'))
     G, alef_u = D['glyphs'], D['alef_u']
     U = ALEF_UNITS / (alef_u * R_W)
