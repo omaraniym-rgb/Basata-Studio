@@ -165,7 +165,7 @@ def sad_isol():
     return dict(strokes=S, cuts={}, top=tr([S_DOT], KS, JS, S_JY)[0])
 
 # the writer's ـط loop (from طـ / ـط), 1.3x for ص: a tilted leaf sitting on the line, bottom point B at the origin
-T_LOOP = [(0.0, 0.3), (1.0, 0.55), (1.95, 1.3), (2.6, 2.6), (1.05, 3.6), (-0.8, 2.85), (-1.7, 1.25), (-1.5, 0.4)]
+T_LOOP = [(0.0, 0.3), (1.0, 0.55), (1.95, 1.3), (2.6, 2.6), (1.05, 3.6), (-0.8, 2.85), (-1.65, 1.3), (-1.35, 0.55), (-1.9, 0.18)]
 TL_DOT = (0.9, 5.3)
 
 def loop_at(xb):
@@ -173,12 +173,12 @@ def loop_at(xb):
 
 def sad_init():
     xb = 2.6
-    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.5, 0.06), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join')]
+    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.8, 0.03), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join')]
     return dict(strokes=S, cuts=dict(left=0.0), top=(TL_DOT[0] + xb, TL_DOT[1]))
 
 def sad_medi():
     xb, rc = 2.6, 6.3
-    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.5, 0.06), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join'),
+    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.8, 0.03), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join'),
          ([(rc + 0.7, 0.0), (rc, 0.0), (xb + 2.4, 0.05), (xb + 1.0, 0.22), (xb, 0.3)], 'join', 'join')]
     return dict(strokes=S, cuts=dict(left=0.0, right=rc), top=(TL_DOT[0] + xb, TL_DOT[1]))
 

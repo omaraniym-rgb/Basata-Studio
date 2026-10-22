@@ -16,12 +16,13 @@ from redraw import ease, DOT
 pen4.SPUR = (1.0, 0.0)
 WX = 1.15          # widen: horizontal proportion of every letter
 EXT = 0.35         # extra connector length on each joining side (pen widths)
+CL = 1.75          # standard run from a letter's body to its join edge (pen widths), the same for every letter
 ASC = 10.5         # ascender height (pen widths), the notebook hand's alef
 R0 = 22.6          # pen radius in px at R_W=44
 SIDES = {'init': ('left',), 'medi': ('left', 'right'), 'fina': ('right',)}
 
 
-def fit(P, closed, eps=0.13):
+def fit(P, closed, eps=0.2):
     """Smoothing B-spline through a stroke (pen-width units); returns dense points."""
     P = np.asarray(P, float)
     if closed and len(P) > 3 and np.allclose(P[0], P[-1]): P = P[:-1]
@@ -51,6 +52,26 @@ def smooth_closed(C, keep=5):
     F = np.fft.fft(zr); F[keep + 1:-keep] = 0
     zs = np.fft.ifft(F)
     return np.column_stack([zs.real, zs.imag])
+
+
+def rail(P, closed):
+    """The pen glides along the line: any near-horizontal part of a stroke close to the baseline
+    is laid exactly onto it, blending smoothly where the stroke leaves the line."""
+    if len(P) < 4: return P
+    from scipy.ndimage import gaussian_filter1d
+    d = np.r_[0, np.cumsum(np.hypot(*np.diff(P, axis=0).T))]
+    if d[-1] < 0.3: return P
+    t = np.arange(0, d[-1] + 1e-9, 0.05)
+    Q = np.column_stack([np.interp(t, d, P[:, 0]), np.interp(t, d, P[:, 1])])
+    mode = 'wrap' if closed else 'nearest'
+    S = gaussian_filter1d(Q, 6, axis=0, mode=mode)                    # direction from the calm line, not the jitter
+    g = np.gradient(S, axis=0)
+    ang = np.degrees(np.arctan2(np.abs(g[:, 1]), np.abs(g[:, 0]) + 1e-9))
+    sm = lambda v, a, b: np.clip((v - a) / (b - a), 0, 1) ** 2 * (3 - 2 * np.clip((v - a) / (b - a), 0, 1))
+    w = (1 - sm(ang, 15, 35)) * (1 - sm(np.abs(Q[:, 1]), 0.5, 0.95))
+    w = gaussian_filter1d(w, 8, mode=mode)
+    Q[:, 1] = Q[:, 1] * (1 - np.clip(w * 1.15, 0, 1))
+    return Q
 
 
 def squash(P, top):
@@ -92,20 +113,87 @@ def rebuild_glyph(g, name):
     allp = np.vstack([s['p'] for s in strokes] + heads) if (strokes or heads) else np.zeros((1, 2))
     top = allp[:, 1].max()
     right = (g['right'] - L0) / R_W
-    for s in strokes: s['p'] = squash(s['p'], top) * [WX, 1]
+    for s in strokes: s['p'] = rail(squash(s['p'], top) * [WX, 1], s['closed'])
     heads = [squash(h, top) * [WX, 1] for h in heads]
+    for h in heads:                                     # heads sit on the line, never hang below the rail
+        if h[:, 1].mean() > -0.6: h[:, 1] = np.maximum(h[:, 1], -0.5)
+    if name.split('.')[0] in ('tah', 'zah'):            # the stem stands on its loop
+        for s in strokes:
+            if s['closed'] or s['p'][:, 1].max() < 5: continue
+            e = 0 if s['p'][0, 1] < s['p'][-1, 1] else 1
+            end = s['p'][0 if e == 0 else -1]
+            others = np.vstack([o['p'] for o in strokes if o is not s])
+            k = int(np.argmin(np.hypot(*(others - end).T))); gap = np.hypot(*(others[k] - end))
+            if 0.05 < gap < 4.5:
+                tgt = others[k] + (end - others[k]) / gap * 0.25
+                P = np.vstack([s['p'], tgt[None]]) if e == 1 else np.vstack([tgt[None], s['p']])
+                s['p'] = P; s['free'][e] = False
     dots = [squash(np.array([d]), top)[0] * [WX, 1] for d in dots]
     right *= WX
     form = g['form']
     sides = SIDES.get(form, ()) or (('right',) if name == 'lamalef.fina' else ())
+    fam = name.split('.')[0]
+    if sides and fam not in ('seen', 'sheen'):          # one measured run between letters, everywhere
+        P = np.vstack([s['p'] for s in strokes] + heads)
+        body = P[np.abs(P[:, 1]) > 0.45]
+        if len(body):
+            x0 = body[:, 0].min() - CL if 'left' in sides else 0.0
+            x1 = body[:, 0].max() + CL if 'right' in sides else right
+            cut = []
+            for s in strokes:
+                p = s['p'] - [x0, 0]
+                keep = ~((np.abs(p[:, 1]) < 0.6) & ((('left' in sides) & (p[:, 0] < 0)) | (('right' in sides) & (p[:, 0] > x1 - x0))))
+                if keep.all():
+                    s['p'] = p; cut.append(s); continue
+                idx = np.where(keep)[0]
+                for run in np.split(idx, np.where(np.diff(idx) > 1)[0] + 1):
+                    if len(run) < 3: continue
+                    fr = [s['free'][0] and run[0] == 0, s['free'][1] and run[-1] == len(p) - 1]
+                    cut.append(dict(p=p[run], closed=False, free=fr))
+            strokes = cut
+            heads = [h - [x0, 0] for h in heads]
+            dots = [d - [x0, 0] for d in dots]
+            right = x1 - x0
+        # the pen never lifts on the line: a free end resting near another stroke joins it
+        for s in strokes:
+            if s['closed']: continue
+            for e in (0, 1):
+                end = s['p'][0 if e == 0 else -1]
+                if not s['free'][e] or abs(end[1]) > 1.0: continue
+                others = [o['p'] for o in strokes if o is not s]
+                if not others: continue
+                O = np.vstack(others); k = int(np.argmin(np.hypot(*(O - end).T))); gap = np.hypot(*(O[k] - end))
+                if 0.05 < gap < 3.2:
+                    tgt = O[k] + (end - O[k]) / gap * 0.2
+                    s['p'] = np.vstack([s['p'], tgt[None]]) if e == 1 else np.vstack([tgt[None], s['p']])
+                    s['free'][e] = False
     left_e = -EXT if 'left' in sides else None
     right_e = right + EXT if 'right' in sides else None
-    for s in strokes:                                   # ends at a join edge: laid onto the baseline, run into the edge
+    for s in strokes:                                   # strokes meeting on the rail meet exactly on the line
+        if s['closed'] or len(s['p']) < 3: continue
+        for e in (0, 1):
+            if s['free'][e]: continue
+            P = s['p'] if e == 1 else s['p'][::-1]
+            if abs(P[-1, 1]) > 0.6: continue
+            d = np.r_[0, np.cumsum(np.hypot(*np.diff(P[::-1], axis=0).T))][::-1]
+            u = np.clip(d / 0.9, 0, 1); u = u * u * (3 - 2 * u)
+            P = np.column_stack([P[:, 0], P[:, 1] * u])
+            s['p'] = P if e == 1 else P[::-1]
+    ends = {}                                           # each join side: the stroke end nearest the join point
+    for side in sides:
+        gx = 0.0 if side == 'left' else right
+        best = None
+        for si, s in enumerate(strokes):
+            if s['closed']: continue
+            for e in (0, 1):
+                x, y = s['p'][0 if e == 0 else -1]
+                dd = np.hypot(x - gx, 1.6 * y)
+                if dd < 2.6 and (best is None or dd < best[0]): best = (dd, si, e)
+        if best: ends[(best[1], best[2])] = side
+    for si, s in enumerate(strokes):                    # ends at a join edge: laid onto the baseline, run into the edge
         for e in (0, 1):
             P = s['p'] if e == 1 else s['p'][::-1]
-            x, y = P[-1]
-            side = 'left' if ('left' in sides and x < 1.2 and abs(y) < 1.3) else \
-                   'right' if ('right' in sides and x > right - 1.2 and abs(y) < 1.3) else None
+            side = ends.get((si, e))
             if not side: continue
             s['free'][e] = False
             d = np.r_[0, np.cumsum(np.hypot(*np.diff(P[::-1], axis=0).T))][::-1]      # distance from this end
@@ -115,6 +203,7 @@ def rebuild_glyph(g, name):
             P = np.vstack([P, [[ex, 0.0]]])
             s['p'] = P if e == 1 else P[::-1]
         s['q'] = fit(s['p'], s['closed'])
+        if sides: s['q'] = rail(s['q'], s['closed'])
     return dict(strokes=strokes, heads=heads, dots=dots, left=left_e, right=right_e, form=form, side=g.get('side'))
 
 
@@ -177,21 +266,77 @@ CUSTOM = {
         ([(1.5, 10.25), (1.42, 7.0), (1.33, 3.5), (1.3, 1.0), (1.42, 0.12)], False, [True, False])]),
 }
 
+# سـ ـسـ : the flat Ruqʿah seen, a short start tick then one run on the line
+CUSTOM['seen.init'] = dict(form='init', strokes=[
+    ([(4.0, 1.0), (3.75, 0.45), (3.45, 0.08), (2.9, 0.0), (1.6, 0.0), (0.0, 0.0)], False, [True, False])])
+CUSTOM['seen.medi'] = dict(form='medi', right=3.6, strokes=[
+    ([(3.6, 0.0), (2.6, 0.0), (1.2, 0.0), (0.0, 0.0)], False, [False, False])])
+
+
+def _from_redraw(fn, k, stem=None, form='medi'):
+    from redraw import sad_init, sad_medi
+    g = {'init': sad_init, 'medi': sad_medi}[fn]()
+    st = []
+    for pts, m0, m1 in g['strokes']:
+        P = np.array(pts, float) * k
+        st.append((P.tolist(), False, [m0 == 'land', m1 == 'land']))
+    if stem: st.append((stem, False, [True, False]))
+    out = dict(form=form, strokes=st)
+    if 'right' in g['cuts']: out['right'] = g['cuts']['right'] * k
+    return out
+
+
+TAH_K = 0.82
+TAH_STEM = [(2.35, 10.2), (2.2, 7.0), (2.05, 4.5), (1.98, 2.7)]
+CUSTOM['tah.medi'] = _from_redraw('medi', TAH_K, TAH_STEM)
+CUSTOM['tah.init'] = _from_redraw('init', TAH_K, TAH_STEM, form='init')
+CUSTOM['zah.medi'] = dict(CUSTOM['tah.medi'], dots=[(3.4, 5.6)])
+CUSTOM['zah.init'] = dict(CUSTOM['tah.init'], dots=[(3.4, 5.6)])
+
 
 def custom_glyph(name):
     c = CUSTOM[name]
     st = [dict(p=np.array(p, float) * [WX, 1], closed=cl, free=list(fr)) for p, cl, fr in c['strokes']]
-    for s in st: s['q'] = fit(s['p'], s['closed'], eps=0.05)
+    for s in st: s['q'] = rail(fit(s['p'], s['closed'], eps=0.05), s['closed'])
     sides = SIDES.get(c['form'], ())
-    return dict(strokes=st, heads=[], dots=[], left=-EXT if 'left' in sides else None,
+    return dict(strokes=st, heads=[], dots=[np.array(d) * [WX, 1] for d in c.get('dots', [])], left=-EXT if 'left' in sides else None,
                 right=c['right'] * WX + EXT if 'right' in sides else None, form=c['form'], side=None)
+
+
+TOOTH = ('teh', 'theh', 'noon', 'yeh')                # Ruqʿah: these share one tooth with ب, only the dots differ
+
+
+SHARE = {'sheen.init': 'seen.init', 'sheen.medi': 'seen.medi'}
+
+
+def shared_tooth(D, name, base_name=None):
+    fam, form = name.split('.')
+    base_name = base_name or 'beh.' + form
+    base = custom_glyph(base_name) if base_name in CUSTOM else rebuild_glyph(D['glyphs'][base_name], base_name)
+    own = rebuild_glyph(D['glyphs'][name], name)
+    is_mark = lambda p: p[:, 1].min() > 1.3 or p[:, 1].max() < -0.8
+    body = [s for s in base['strokes'] if not is_mark(s['q'])]
+    marks = [s for s in own['strokes'] if is_mark(s['q'])]
+    B = np.vstack([s['q'] for s in body])
+    tx = B[:, 0][B[:, 1] > 0.45].mean() if (B[:, 1] > 0.45).any() else B[:, 0].mean()
+    pts = [s['q'] for s in marks] + [np.array(own['dots']).reshape(-1, 2)]
+    allm = np.vstack(pts) if any(len(p) for p in pts) else None
+    dx = tx - allm[:, 0].mean() if allm is not None and len(allm) else 0.0
+    for s in marks: s['q'] = s['q'] + [dx, 0]
+    return dict(base, strokes=body + marks, dots=[d + [dx, 0] for d in own['dots']])
 
 
 def run(inp='stage2r.pkl', out='stage3.pkl', only=None):
     D = pickle.load(open(inp, 'rb'))
-    for name, g in D['glyphs'].items():
+    for name, g in list(D['glyphs'].items()):
         if g['form'] == 'mark' or (only and name not in only): continue
-        D['glyphs'][name] = render(custom_glyph(name) if name in CUSTOM else rebuild_glyph(g, name))
+        if name.split('.')[0] in TOOTH and g['form'] in ('init', 'medi'):
+            G = shared_tooth(D, name)
+        elif name in SHARE:
+            G = shared_tooth(D, name, SHARE[name])
+        else:
+            G = custom_glyph(name) if name in CUSTOM else rebuild_glyph(g, name)
+        D['glyphs'][name] = render(G)
         print('.', end='', flush=True)
     print()
     pickle.dump(D, open(out, 'wb'))

@@ -26,6 +26,5 @@ SHAPES = {
     'shadda':      dict(cp=0x651, strokes=[np.vstack([line(0.0, 1.5, 0.15, 0.4, 8), arc(0.85, 0.4, 0.7, 180, 360, 30)[1:],
                                                      arc(2.25, 0.4, 0.7, 180, 360, 30)[1:], line(2.95, 0.4, 3.1, 1.6, 8)[1:]])],
                         w=3.1, mark=True),
-    'seen.medi':   dict(cp=None, strokes=[line(-0.6, 0.0, 4.0, 0.0, 40)], w=3.4, join=True, letter=True),
     'tatweel':     dict(cp=0x640, strokes=[line(-0.3, 0.0, 2.6, 0.0)], w=2.3, join=True),
 }
