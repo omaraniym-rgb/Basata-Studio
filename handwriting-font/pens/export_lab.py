@@ -3,7 +3,7 @@ import json, base64, io, os, cv2, numpy as np
 from PIL import Image
 from repen import ink_mask, stroke_width, UP
 from pen4 import analyse
-from pen5 import analyse5
+from pen6 import analyse6
 
 SAMPLES = [  # (id, label, file, y0, y1, x0, x1)
     ('salam', 'السلام عليكم', '../sources/src1.jpg', 520, 1075, 100, 1790),
@@ -20,7 +20,7 @@ def pack(A):
         st, lp = s.get('stem'), s.get('loop')
         f = (int(s['closed']) | int(s['free'][0]) << 1 | int(s['free'][1]) << 2 | int(s['bridged'][0]) << 3
              | int(s['bridged'][1]) << 4 | int(bool(s.get('bridge'))) << 5 | int(bool(st)) << 6
-             | int(bool(st) and st['pivot'] == 1) << 7 | int(bool(lp)) << 8 | int(bool(s.get('dot'))) << 9)
+             | int(bool(st) and st['pivot'] == 1) << 7 | int(bool(lp)) << 8 | int(bool(s.get('dot'))) << 9 | int(0 in s.get('touch', [])) << 10 | int(1 in s.get('touch', [])) << 11)
         flat += [len(P), f, s.get('line', -1), int(round(st['angle'] * 100)) if st else 0,
                  int(round(lp['pivot'][0])) if lp else 0, int(round(lp['pivot'][1])) if lp else 0,
                  int(round(lp['R'] * 8)) if lp else 0, int(round(W.get(s.get('word'), {}).get('delta', 0.0) * 8))]
@@ -39,7 +39,7 @@ for sid, label, f, y0, y1, x0, x1 in SAMPLES:
             others = (lab > 0) & (lab != i)
             if not others[max(0, y - r):y + hh + r, max(0, x - r):x + ww + r].any():
                 m[lab == i] = False
-    raw, clean = analyse(m, w), analyse5(m, w)
+    raw, clean = analyse(m, w), analyse6(m, w)
     small = cv2.resize(m.astype(np.uint8) * 255, (m.shape[1] // UP, m.shape[0] // UP), interpolation=cv2.INTER_AREA)
     rgba = np.zeros(small.shape + (4,), np.uint8); rgba[..., 3] = small
     buf = io.BytesIO(); Image.fromarray(rgba).save(buf, 'PNG', optimize=True)

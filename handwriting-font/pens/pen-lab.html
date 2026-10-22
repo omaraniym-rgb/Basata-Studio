@@ -167,7 +167,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   const KEYS = ['e', 'l', 'v', 'c', 't', 'm', 'w', 'a'];
   const PRESETS = [
     { id: 'hand', name: 'Your hand today', sub: 'exactly as written', e: 0, l: 0, v: 0, c: 1.0, t: 0, m: 0, w: 1.0, a: 68 },
-    { id: 'pick', name: 'Back in the day', sub: 'fluent, on the line', e: 1, l: 0.8, v: 1, c: 1.3, t: 0.8, m: 0.6, w: 1.0, a: 68, star: true },
+    { id: 'pick', name: 'Back in the day', sub: 'your settings, tightened', e: 1, l: 0.8, v: 1, c: 1.3, t: 0.95, m: 0.9, w: 1.05, a: 46, star: true },
     { id: 'fountain', name: 'Fountain pen', sub: 'fluent + italic nib', e: 1, l: 0.85, v: 1, c: 1.7, t: 0.55, m: 0.65, w: 1.05, a: 66 },
     { id: 'callig', name: 'Calligraphic', sub: 'clear thick and thin', e: 1, l: 0.9, v: 1, c: 2.1, t: 0.85, m: 0.65, w: 1.05, a: 70 },
     { id: 'qalam', name: 'Waseem-like', sub: 'full reed-pen contrast', e: 1, l: 1, v: 1, c: 2.7, t: 0.9, m: 0.7, w: 1.1, a: 72 },
@@ -176,8 +176,8 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   const pick = PRESETS.find(p => p.id === 'pick');
   const state = { sample: 0, preset: 'pick', ghost: false };
   KEYS.forEach(k => state[k] = pick[k]);
-  try { Object.assign(state, JSON.parse(localStorage.getItem('penlab5') || '{}')); } catch (e) {}
-  const save = () => { try { localStorage.setItem('penlab5', JSON.stringify(state)); } catch (e) {} };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('penlab6') || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem('penlab6', JSON.stringify(state)); } catch (e) {} };
 
   // ---- decode: per stroke a header of 8 int16, then x, y, r*8 per point (3x scale) ----
   function decode(b64, up) {
@@ -189,7 +189,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
       const p = [], r = [];
       for (let j = 0; j < n; j++, i += 3) { p.push([buf[i] / up, buf[i + 1] / up]); r.push(buf[i + 2] / 8 / up); }
       out.push({
-        p, r, line, shift: shift / 8 / up, dot: !!(f & 512), closed: !!(f & 1), free: [!!(f & 2), !!(f & 4)], bridged: [!!(f & 8), !!(f & 16)],
+        p, r, line, shift: shift / 8 / up, dot: !!(f & 512), touch: [!!(f & 1024), !!(f & 2048)], closed: !!(f & 1), free: [!!(f & 2), !!(f & 4)], bridged: [!!(f & 8), !!(f & 16)],
         bridge: !!(f & 32), stem: (f & 64) ? { pivot: (f & 128) ? 1 : 0, angle: stemA / 100 } : null,
         loop: (f & 256) ? { pivot: [lpx / up, lpy / up], R: lR / 8 / up } : null,
       });
@@ -246,8 +246,41 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
     }
     return out;
   }
+  function twice(arr, sigma, closed, pin) {          // 2·G(p) − G(G(p)): kills tremor, keeps curve size
+    if (sigma <= 0 || arr.length < 5) return arr;
+    const g = smooth(arr, sigma, closed, false), gg = smooth(g, sigma, closed, false);
+    let out = g.map((v, i) => v.map((x, c) => 2 * x - gg[i][c]));
+    if (pin && !closed) {
+      const n = out.length, s = Math.min(sigma, n / 6), span = 2.5 * s;
+      const d0 = arr[0].map((v, c) => v - out[0][c]), d1 = arr[n - 1].map((v, c) => v - out[n - 1][c]);
+      out = out.map((v, i) => { const wa = Math.max(0, 1 - i / span), wb = Math.max(0, 1 - (n - 1 - i) / span);
+        return v.map((x, c) => x + wa * d0[c] + wb * d1[c]); });
+    }
+    return out;
+  }
   const meanR = p => { let cx = 0, cy = 0; p.forEach(q => { cx += q[0]; cy += q[1]; }); cx /= p.length; cy /= p.length;
     let s = 0; p.forEach(q => s += Math.hypot(q[0] - cx, q[1] - cy)); return [s / p.length, cx, cy]; };
+
+  function glue(geo, w, k) {
+    const cell = 2 * w, grid = new Map(), key = (x, y) => Math.floor(x / cell) + ',' + Math.floor(y / cell);
+    geo.forEach((g, gi) => g.p.forEach((q, qi) => { const kk = key(q[0], q[1]); if (!grid.has(kk)) grid.set(kk, []); grid.get(kk).push([gi, qi]); }));
+    geo.forEach((g, gi) => {
+      if (g.s.closed || g.p.length < 3) return;
+      for (let e = 0; e < 2; e++) {
+        if (g.s.free[e]) continue;
+        const n = g.p.length, end = g.p[e === 0 ? 0 : n - 1];
+        let bd = 1e9, bp = null;
+        const cx = Math.floor(end[0] / cell), cy = Math.floor(end[1] / cell);
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+          const list = grid.get((cx + a) + ',' + (cy + b)); if (!list) continue;
+          for (const [oj, oq] of list) { if (oj === gi) continue; const q = geo[oj].p[oq], dd = Math.hypot(q[0] - end[0], q[1] - end[1]); if (dd < bd) { bd = dd; bp = q; } }
+        }
+        if (!bp || bd > 1.5 * w || bd < 0.02) continue;
+        const dx = (bp[0] - end[0]) * k, dy = (bp[1] - end[1]) * k, span = 2 * w / STEP;
+        g.p = g.p.map((q, i) => { const idx = e === 0 ? i : n - 1 - i, f = Math.max(0, 1 - idx / span); return [q[0] + f * dx, q[1] + f * dy]; });
+      }
+    });
+  }
 
   // ---- your hand back in the day: cached per sample and dials ----
   const ease = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
@@ -258,7 +291,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
     const useClean = state.e > 0 || state.l > 0 || state.v > 0;
     const src = useClean ? sm.cleanS : sm.rawS, rmed = useClean ? sm.rmed : sm.rawRmed, w = sm.w;
     const flu = state.e, mend = flu > 0.5, H = [-Math.SQRT1_2, Math.SQRT1_2];   // heavier moving left and down
-    const res = [];
+    const res = [], geo = [];
     for (const s of src) {
       if (s.bridge && !mend) continue;
       let P = s.p;
@@ -281,18 +314,24 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
       }
       let { p, r: rOld, d } = resample(P, rm, s.closed);
       const rEven = resample(P, re, s.closed).r;
+      const sig = state.m * 1.4 * w / STEP;
       if (s.loop) {
         const pv = s.closed ? null : s.loop.pivot, [R0] = meanR(p);
-        p = smooth(p, Math.min(state.m * 0.6 * w, p.length / 14) / STEP, s.closed, true);
+        p = twice(p, Math.min(sig, p.length / 10), s.closed, true);
         const [R1, cx, cy] = meanR(p), c = pv || [cx, cy];
         if (R1 > 1e-3) p = p.map(([x, y]) => [c[0] + (x - c[0]) * R0 / R1, c[1] + (y - c[1]) * R0 / R1]);
       } else {
-        p = smooth(p, state.m * 0.6 * w / STEP, s.closed, true);
+        p = twice(p, sig, s.closed, true);
       }
       rOld = smooth(rOld.map(v => [v]), (state.m * 1.2 * w + 0.15 * w) / STEP, s.closed, false).map(v => v[0]);
-      const n = p.length; d = [0]; for (let i = 1; i < n; i++) d.push(d[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+      geo.push({ s, p, rOld, rEven });
+    }
+    if (flu > 0) glue(geo, w, flu);
+    for (const { s, p, rOld, rEven } of geo) {
+      const n = p.length; let d = [0]; for (let i = 1; i < n; i++) d.push(d[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
       const L = d[n - 1] || 0;
-      const free = s.free.map((f, i) => f && !(mend && s.bridged[i]));
+      let free = s.free.map((f, i) => f && !(mend && s.bridged[i]));
+      if (!mend) free = free.map((f, i) => f || s.touch[i]);
       const s0 = -p[0][0] + 0.8 * p[0][1], s1 = -p[n - 1][0] + 0.8 * p[n - 1][1], ex = s0 > s1 ? 0 : 1;
       const rNew = new Array(n), r = new Array(n);
       for (let i = 0; i < n; i++) {
@@ -426,7 +465,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   const pens = $('pens');
   PRESETS.forEach(p => {
     const b = document.createElement('button'); b.className = 'pen'; b.type = 'button'; b.dataset.id = p.id;
-    b.innerHTML = `<canvas data-id="${p.id}"></canvas>${p.star ? '<span class="star">my pick</span>' : ''}<b>${p.name}</b><small>${p.sub}</small>`;
+    b.innerHTML = `<canvas data-id="${p.id}"></canvas>${p.star ? '<span class="star">your pick</span>' : ''}<b>${p.name}</b><small>${p.sub}</small>`;
     b.onclick = () => { state.preset = p.id; KEYS.forEach(k => state[k] = p[k]); sync(); };
     pens.appendChild(b);
   });
