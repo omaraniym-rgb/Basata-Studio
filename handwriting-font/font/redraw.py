@@ -112,15 +112,17 @@ KT, JT = 0.0671, (389, 313)
 TRI = [(389, 311), (392, 285), (397, 258), (404, 237), (414, 240), (428, 255), (441, 271), (445, 288), (440, 302),
        (420, 307), (400, 311), (389, 313)]
 
+# standard Ruqʿah حـ in one pen stroke: a short cap that bends back down into the diagonal, then the line
+HAH7 = [(0.25, 4.55), (0.75, 5.3), (1.7, 5.45), (2.7, 5.35), (3.3, 5.0), (3.15, 4.3), (2.55, 3.15), (1.75, 1.85),
+        (1.0, 0.8), (0.35, 0.15), (-0.4, 0.0), (-1.0, 0.0), (-1.7, 0.0)]
+
 def hah_init(dot=None):
-    S = [(tr(TRI, KT, JT) + [(-1.0, 0.0), (-1.7, 0.0)], 'land', 'join')]
-    return dict(strokes=S, cuts=dict(left=-1.0), apex=(1.1, 5.1))
+    return dict(strokes=[(HAH7, 'land', 'join')], cuts=dict(left=-1.0), apex=(1.7, 5.45))
 
 def hah_medi(dot=None):
-    rc = 5.0
-    S = [(tr(TRI, KT, JT) + [(-1.0, 0.0), (-1.7, 0.0)], 'land', 'join'),
-         ([(rc + 0.7, 0.0), (rc, 0.0), (4.4, 0.08), (3.85, 0.4), (3.42, 0.74)], 'join', 'join')]
-    return dict(strokes=S, cuts=dict(left=-1.0, right=rc), apex=(1.1, 5.1))
+    rc = 4.6
+    S = [(HAH7, 'land', 'join'), ([(rc + 0.7, 0.0), (rc, 0.0), (2.6, 0.0), (1.2, 0.02), (0.3, 0.05)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=-1.0, right=rc), apex=(1.7, 5.45))
 
 # ---- ع غ : open 'c' head with its tongue, long bowl (new ع sample) ----
 KA, JA = 0.0436, (532, 402)
@@ -202,7 +204,7 @@ def glyph_defs():
     for fam, dot in (('hah', None), ('jeem', 'below'), ('khah', 'above')):
         s, i, m, f = hah_isol(), hah_init(), hah_medi(), hah_fina()
         for g in (i, m):
-            g['dots'] = [] if dot is None else [((1.6, -2.0) if dot == 'below' else (1.2, 6.8), DOT)]
+            g['dots'] = [] if dot is None else [((1.75, -1.85) if dot == 'below' else (1.6, 7.3), DOT)]
         for g in (s, f):
             g['dots'] = [] if dot is None else [(g['bowl'] if dot == 'below' else g['top'], DOT)]
         G[fam], G[fam + '.init'], G[fam + '.medi'], G[fam + '.fina'] = s, i, m, f

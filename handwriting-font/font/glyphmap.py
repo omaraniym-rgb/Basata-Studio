@@ -44,14 +44,14 @@ g('reh', S8, (1251, 1468, 1285, 1498), 'isol', 'r8')
 g('reh.fina', S8, (1102, 1464, 1197, 1495), 'fina', 'r8')
 g('zain', S8, (1248, 1549, 1287, 1597), 'isol', 'z8')
 g('zain.fina', S8, (1139, 1546, 1224, 1597), 'fina', 'z8')
-g('seen', S8, (1004, 1679, 1094, 1715), 'isol', 's8')
+g('seen', S8, (385, 1637, 489, 1672), 'isol', 's8')     # writer swapped these two on the sheet
 g('seen.init', S8, (894, 1667, 978, 1689), 'init', 's8', keep_flat=True)
 g('seen.medi', S8, (773, 1656, 875, 1675), 'medi', 's8', keep_flat=True)
-g('seen.fina', S8, (385, 1637, 489, 1672), 'fina', 's8')
-g('sheen', S8, (1013, 1744, 1098, 1809), 'isol', 'sh8')
+g('seen.fina', S8, (1004, 1679, 1094, 1715), 'fina', 's8')
+g('sheen', S8, (640, 1733, 772, 1804), 'isol', 'sh8')   # writer swapped these two on the sheet
 g('sheen.init', S8, (929, 1744, 1004, 1796), 'init', 'sh8')
 g('sheen.medi', S8, (805, 1740, 892, 1791), 'medi', 'sh8')
-g('sheen.fina', S8, (640, 1733, 772, 1804), 'fina', 'sh8')
+g('sheen.fina', S8, (1013, 1744, 1098, 1809), 'fina', 'sh8', thin=True)
 g('sad', S8, (1167, 1877, 1256, 1923), 'isol', 'sd8')
 g('sad.init', S8, (806, 1893, 905, 1927), 'init', 'sd8', hard=True)   # middle form, right connector cut off
 g('sad.medi', S8, (806, 1893, 956, 1927), 'medi', 'sd8')
