@@ -83,7 +83,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   <header>
     <h1>مختبر القلم</h1>
     <span class="en">Pen Lab</span>
-    <p>Every dial starts at your exact handwriting. Consistency evens out redrawn, overdrawn and leaning strokes; the pen adds reed-pen contrast, fine flicks and a calmer line. Your letter shapes never change.</p>
+    <p>Every dial starts at your exact handwriting. Fluency gives back the steady pressure and clean flicks of a hand that writes every day; On the line sits every word on its line. Your letter shapes never change.</p>
   </header>
 
   <section class="sheet" aria-label="Writing sample">
@@ -98,22 +98,22 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
     <div>
       <div class="pens" id="pens" role="group" aria-label="Pens"></div>
       <div class="group">
-        <h3>Consistency</h3>
+        <h3>Your hand, back in the day</h3>
         <div class="dials">
           <div class="dial">
-            <label for="even">Even pressure <output id="o-even"></output></label>
+            <label for="even">Fluency <output id="o-even"></output></label>
             <input type="range" id="even" min="0" max="1" step="0.05">
-            <div class="ends"><span>as written</span><span>one steady pen</span></div>
+            <div class="ends"><span>today</span><span>writing every day</span></div>
+          </div>
+          <div class="dial">
+            <label for="level">On the line <output id="o-level"></output></label>
+            <input type="range" id="level" min="0" max="1" step="0.05">
+            <div class="ends"><span>as written</span><span>every word on its line</span></div>
           </div>
           <div class="dial">
             <label for="lean">Same lean <output id="o-lean"></output></label>
             <input type="range" id="lean" min="0" max="1" step="0.05">
             <div class="ends"><span>as written</span><span>every alef alike</span></div>
-          </div>
-          <div class="dial">
-            <label for="level">Level lines <output id="o-level"></output></label>
-            <input type="range" id="level" min="0" max="1" step="0.05">
-            <div class="ends"><span>as written</span><span>straight rows</span></div>
           </div>
         </div>
       </div>
@@ -166,18 +166,18 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   // pen:         c contrast · t flicks · m calm · w weight · a nib angle
   const KEYS = ['e', 'l', 'v', 'c', 't', 'm', 'w', 'a'];
   const PRESETS = [
-    { id: 'hand', name: 'Your hand', sub: 'exactly as written', e: 0, l: 0, v: 0, c: 1.0, t: 0, m: 0, w: 1.0, a: 68 },
-    { id: 'steady', name: 'Steady hand', sub: 'consistency only', e: 0.9, l: 0.8, v: 1, c: 1.0, t: 0.35, m: 0.35, w: 1.0, a: 68 },
-    { id: 'pick', name: 'A little qalam', sub: 'steady + flicks + soft contrast', e: 0.9, l: 0.8, v: 1, c: 1.5, t: 0.75, m: 0.4, w: 1.0, a: 68, star: true },
-    { id: 'callig', name: 'Calligraphic', sub: 'clear thick and thin', e: 0.9, l: 0.9, v: 1, c: 2.0, t: 0.9, m: 0.5, w: 1.05, a: 70 },
-    { id: 'qalam', name: 'Waseem-like', sub: 'full reed-pen contrast', e: 0.95, l: 1, v: 1, c: 2.7, t: 1.0, m: 0.6, w: 1.1, a: 72 },
+    { id: 'hand', name: 'Your hand today', sub: 'exactly as written', e: 0, l: 0, v: 0, c: 1.0, t: 0, m: 0, w: 1.0, a: 68 },
+    { id: 'pick', name: 'Back in the day', sub: 'fluent, on the line', e: 1, l: 0.8, v: 1, c: 1.3, t: 0.8, m: 0.6, w: 1.0, a: 68, star: true },
+    { id: 'fountain', name: 'Fountain pen', sub: 'fluent + italic nib', e: 1, l: 0.85, v: 1, c: 1.7, t: 0.55, m: 0.65, w: 1.05, a: 66 },
+    { id: 'callig', name: 'Calligraphic', sub: 'clear thick and thin', e: 1, l: 0.9, v: 1, c: 2.1, t: 0.85, m: 0.65, w: 1.05, a: 70 },
+    { id: 'qalam', name: 'Waseem-like', sub: 'full reed-pen contrast', e: 1, l: 1, v: 1, c: 2.7, t: 0.9, m: 0.7, w: 1.1, a: 72 },
   ];
   const $ = id => document.getElementById(id);
   const pick = PRESETS.find(p => p.id === 'pick');
   const state = { sample: 0, preset: 'pick', ghost: false };
   KEYS.forEach(k => state[k] = pick[k]);
-  try { Object.assign(state, JSON.parse(localStorage.getItem('penlab4') || '{}')); } catch (e) {}
-  const save = () => { try { localStorage.setItem('penlab4', JSON.stringify(state)); } catch (e) {} };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('penlab5') || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem('penlab5', JSON.stringify(state)); } catch (e) {} };
 
   // ---- decode: per stroke a header of 8 int16, then x, y, r*8 per point (3x scale) ----
   function decode(b64, up) {
@@ -185,11 +185,11 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
     for (let i = 0; i < buf.length; i++) buf[i] = (bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8)) << 16 >> 16;
     const out = [];
     for (let i = 0; i < buf.length;) {
-      const [n, f, line, stemA, lpx, lpy, lR] = buf.subarray(i, i + 7); i += 8;
+      const [n, f, line, stemA, lpx, lpy, lR, shift] = buf.subarray(i, i + 8); i += 8;
       const p = [], r = [];
       for (let j = 0; j < n; j++, i += 3) { p.push([buf[i] / up, buf[i + 1] / up]); r.push(buf[i + 2] / 8 / up); }
       out.push({
-        p, r, line, closed: !!(f & 1), free: [!!(f & 2), !!(f & 4)], bridged: [!!(f & 8), !!(f & 16)],
+        p, r, line, shift: shift / 8 / up, dot: !!(f & 512), closed: !!(f & 1), free: [!!(f & 2), !!(f & 4)], bridged: [!!(f & 8), !!(f & 16)],
         bridge: !!(f & 32), stem: (f & 64) ? { pivot: (f & 128) ? 1 : 0, angle: stemA / 100 } : null,
         loop: (f & 256) ? { pivot: [lpx / up, lpy / up], R: lR / 8 / up } : null,
       });
@@ -249,37 +249,38 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   const meanR = p => { let cx = 0, cy = 0; p.forEach(q => { cx += q[0]; cy += q[1]; }); cx /= p.length; cy /= p.length;
     let s = 0; p.forEach(q => s += Math.hypot(q[0] - cx, q[1] - cy)); return [s / p.length, cx, cy]; };
 
-  // ---- consistency + calm: cached per sample and per those dials ----
+  // ---- your hand back in the day: cached per sample and dials ----
+  const ease = u => { u = Math.max(0, Math.min(1, u)); return u * u * (3 - 2 * u); };
+  const lengthOf = p => { let L = 0; for (let i = 1; i < p.length; i++) L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return L; };
   function prepared(sm) {
-    const key = [state.e, state.l, state.v, state.m].map(v => v.toFixed(2)).join();
+    const key = [state.e, state.l, state.v, state.m, state.t].map(v => v.toFixed(2)).join();
     if (sm.cache.has(key)) return sm.cache.get(key);
     const useClean = state.e > 0 || state.l > 0 || state.v > 0;
     const src = useClean ? sm.cleanS : sm.rawS, rmed = useClean ? sm.rmed : sm.rawRmed, w = sm.w;
-    const mend = state.e > 0.5;
+    const flu = state.e, mend = flu > 0.5, H = [-Math.SQRT1_2, Math.SQRT1_2];   // heavier moving left and down
     const res = [];
     for (const s of src) {
       if (s.bridge && !mend) continue;
       let P = s.p;
+      if (state.v > 0 && s.shift) P = P.map(([x, y]) => [x, y + s.shift * state.v]);
       if (state.l > 0 && s.stem) {
         const piv = s.stem.pivot ? P[P.length - 1] : P[0];
         P = rot(P, piv, -(sm.stemTarget - s.stem.angle) * state.l);
       }
-      if (state.v > 0 && s.line >= 0 && sm.lines[s.line]) {
-        const L = sm.lines[s.line]; P = rot(P, [L.cx, L.cy], L.angle * state.v);
-      }
-      let r = s.r.map(v => Math.min(v, 1.6 * rmed));
-      if (state.e > 0) {
-        const e = state.e;
-        r = r.map(v => v > 1.45 * rmed ? Math.min(v, (1.6 - 0.15 * e) * rmed) : rmed * Math.pow(Math.max(v, 1e-3) / rmed, 1 - e));
-        if (s.loop) {
-          const med = [...r].sort((x, y) => x - y)[r.length >> 1] * 1.15, need = med + 0.42 * w;
-          if (s.loop.R < need) {
-            const k = 1 + (need / Math.max(s.loop.R, 1e-3) - 1) * e, pv = s.loop.pivot;
-            P = P.map(([x, y]) => [pv[0] + (x - pv[0]) * k, pv[1] + (y - pv[1]) * k]);
-          }
+      const Ln = s.line >= 0 ? sm.lines[s.line] : null;
+      if (state.v > 0 && Ln && Ln.m !== null) P = rot(P, [Ln.cx, Ln.m * Ln.cx + Ln.b], Ln.angle * state.v);
+      const rm = s.r.map(v => Math.min(v, 1.6 * rmed));
+      const solid = !s.loop && lengthOf(s.p) < 3 * w;
+      const re = rm.map(v => (solid && v > 1.45 * rmed) ? Math.min(v, 1.45 * rmed) : rmed);
+      if (flu > 0 && s.loop) {
+        const need = rmed * 1.15 + 0.42 * w;
+        if (s.loop.R < need) {
+          const k = 1 + (need / Math.max(s.loop.R, 1e-3) - 1) * flu, pv = s.loop.pivot;
+          P = P.map(([x, y]) => [pv[0] + (x - pv[0]) * k, pv[1] + (y - pv[1]) * k]);
         }
       }
-      let { p, r: rr, d } = resample(P, r, s.closed);
+      let { p, r: rOld, d } = resample(P, rm, s.closed);
+      const rEven = resample(P, re, s.closed).r;
       if (s.loop) {
         const pv = s.closed ? null : s.loop.pivot, [R0] = meanR(p);
         p = smooth(p, Math.min(state.m * 0.6 * w, p.length / 14) / STEP, s.closed, true);
@@ -288,10 +289,37 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
       } else {
         p = smooth(p, state.m * 0.6 * w / STEP, s.closed, true);
       }
-      rr = smooth(rr.map(v => [v]), (state.m * 1.2 * w + 0.15 * w) / STEP, s.closed, false).map(v => v[0]);
+      rOld = smooth(rOld.map(v => [v]), (state.m * 1.2 * w + 0.15 * w) / STEP, s.closed, false).map(v => v[0]);
+      const n = p.length; d = [0]; for (let i = 1; i < n; i++) d.push(d[i - 1] + Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]));
+      const L = d[n - 1] || 0;
       const free = s.free.map((f, i) => f && !(mend && s.bridged[i]));
-      const s0 = -p[0][0] + 0.8 * p[0][1], s1 = -p[p.length - 1][0] + 0.8 * p[p.length - 1][1];
-      res.push({ p, r: rr, d, free, exit: s0 > s1 ? 0 : 1 });
+      const s0 = -p[0][0] + 0.8 * p[0][1], s1 = -p[n - 1][0] + 0.8 * p[n - 1][1], ex = s0 > s1 ? 0 : 1;
+      const rNew = new Array(n), r = new Array(n);
+      for (let i = 0; i < n; i++) {
+        const a = p[Math.max(0, i - 1)], b = p[Math.min(n - 1, i + 1)];
+        let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        if (ex === 0) { tx = -tx; ty = -ty; }
+        rNew[i] = rEven[i] * (1 + 0.10 * (tx * H[0] + ty * H[1]));
+      }
+      const short = s.dot || L < 2.2 * w;
+      for (let i = 0; i < n; i++) {
+        let ro = rOld[i], rn = rNew[i];
+        if (short) {
+          if (!s.loop && L > 0.6 * w) rn = rEven[i] * (0.6 + 0.4 * Math.sin(Math.PI * Math.min(1, d[i] / Math.max(L, 1e-6))));
+        } else for (let e = 0; e < 2; e++) {
+          if (!free[e]) continue;
+          const dist = e === 0 ? d[i] : L - d[i];
+          if (e === ex) {
+            const floor = 1 - 0.78 * state.t;
+            rn *= floor + (1 - floor) * Math.pow(ease(dist / (2.8 * w)), 0.75);
+            ro *= (1 - state.t * 0.7) + state.t * 0.7 * ease(dist / (2.8 * w));
+          } else {
+            rn *= 0.7 + 0.3 * ease(dist / (1.1 * w));
+          }
+        }
+        r[i] = (1 - flu) * ro + flu * rn;
+      }
+      res.push({ p, r, d, free: [false, false], exit: ex });
     }
     if (sm.cache.size > 24) sm.cache.clear();
     sm.cache.set(key, res);
@@ -311,7 +339,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
       const n = s.p.length, L = s.d[s.d.length - 1] || 0;
       for (let i = 0; i < n; i++) {
         let rr = s.r[i] * P.w;
-        if (P.t > 0 && n > 3) for (let e = 0; e < 2; e++) {
+        if (P.t > 0 && n > 3 && s.demo) for (let e = 0; e < 2; e++) {
           if (!s.free[e]) continue;
           const dist = e === 0 ? s.d[i] : L - s.d[i], isExit = e === s.exit;
           const span = (isExit ? 2.8 : 1.2) * w, floor = 1 - P.t * (isExit ? 0.7 : 0.3);
@@ -359,7 +387,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   function demo(points, r) {
     const res = resample(points, points.map(() => r), false);
     const s0 = -res.p[0][0] + 0.8 * res.p[0][1], s1 = -res.p[res.p.length - 1][0] + 0.8 * res.p[res.p.length - 1][1];
-    return { ...res, free: [true, true], exit: s0 > s1 ? 0 : 1 };
+    return { ...res, free: [true, true], exit: s0 > s1 ? 0 : 1, demo: true };
   }
   function drawNib() {
     const cv = $('nibview'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
@@ -414,7 +442,7 @@ button:focus-visible, input:focus-visible, label:focus-within { outline: 2px sol
   }
   $('ghost').addEventListener('change', ev => { state.ghost = ev.target.checked; sync(); });
 
-  const recipe = () => `consistency: even ${state.e.toFixed(2)} · lean ${state.l.toFixed(2)} · level ${state.v.toFixed(2)}\n` +
+  const recipe = () => `hand: fluency ${state.e.toFixed(2)} · on the line ${state.v.toFixed(2)} · lean ${state.l.toFixed(2)}\n` +
     `pen: contrast ${state.c.toFixed(2)} · flicks ${state.t.toFixed(2)} · calm ${state.m.toFixed(2)} · weight ${state.w.toFixed(2)} · angle ${state.a}°`;
   $('copy').addEventListener('click', () => {
     const t = recipe(), btn = $('copy');
