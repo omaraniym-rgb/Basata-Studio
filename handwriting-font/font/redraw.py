@@ -81,58 +81,102 @@ def render(strokes, dots, shape, to_px):
 
 
 # ------------------------------------------------------------------ bodies (pen widths)
-def hah_A(x0):
-    """The writer's 'A' head of initial/medial ح, standing on the line at x0 (counter kept open at text sizes)."""
-    left = [(x0 - 0.2, -0.30), (x0 + 0.8, 1.4), (x0 + 1.85, 3.1), (x0 + 2.6, 4.1), (x0 + 3.05, 4.45)]
-    right = [(x0 + 3.05, 4.45), (x0 + 3.5, 3.95), (x0 + 3.6, 2.5), (x0 + 3.55, 1.2)]
-    bar = [(x0 + 0.65, 1.05), (x0 + 2.0, 1.08), (x0 + 3.55, 1.15)]
-    return left, right, bar
+# Traced from the writer's clean samples (sources/src10_jeem_ain_sad.jpg, src9_basmala.jpg), in photo pixels,
+# then scaled to Ruqʿah proportions (Aref Ruqaa ink box) and seated on the baseline.
 
-def hah_init(dot=None):
-    x0 = 1.9
-    left, right, bar = hah_A(x0)
-    if dot == 'below': left = [(x0 - 1.65, -2.75)] + left
-    S = [([(-0.7, 0.0), (0.0, 0.0), (1.0, 0.03), (x0 + 0.4, 0.06), (x0 + 0.75, 0.15)], 'join', 'join'),
-         (left + right[1:] + [(x0 + 3.85, 1.12), (x0 + 4.6, 1.25), (x0 + 5.3, 1.55)], 'land', 'flick'),
-         (bar, 'join', 'join')]
-    return dict(strokes=S, cuts=dict(left=0.0), apex=(x0 + 3.05, 4.45), x0=x0)
+def tr(pts, k, J, Jy=0.0, dx=0.0):
+    """photo px (y down) -> pen widths (y up), junction J at (dx, Jy)."""
+    return [((x - J[0]) * k + dx, Jy + (J[1] - y) * k) for x, y in pts]
 
-def hah_medi(dot=None):
-    x0 = 1.9
-    left, right, bar = hah_A(x0)
-    if dot == 'below': left = [(x0 - 1.65, -2.75)] + left
-    rc = x0 + 6.3
-    S = [([(-0.7, 0.0), (0.0, 0.0), (1.0, 0.03), (x0 + 0.4, 0.06), (x0 + 0.75, 0.15)], 'join', 'join'),
-         (left + right[1:] + [(x0 + 3.9, 0.7), (x0 + 4.6, 0.2), (x0 + 5.4, 0.02), (rc, 0.0), (rc + 0.7, 0.0)], 'land', 'join'),
-         (bar, 'join', 'join')]
-    return dict(strokes=S, cuts=dict(left=0.0, right=rc), apex=(x0 + 3.05, 4.45), x0=x0)
+# ---- ح ج خ : flat oval head, descent, long bowl (new ج sample) ----
+KH, JH = 0.0405, (255, 345)
+H_OVAL = [(255, 345), (295, 325), (307, 300), (285, 272), (220, 261), (155, 272), (122, 300), (140, 330), (200, 345), (250, 348)]
+H_DESC = [(262, 342), (230, 370), (195, 395), (160, 422), (132, 458), (121, 500), (136, 540), (178, 563), (240, 568),
+          (300, 557), (360, 537), (408, 508)]
+H_JY = -5.55 + (568 - 345) * KH            # bowl bottom on Ruqʿah depth -> junction height
 
 def hah_isol():
-    loop = [(4.6, 3.45), (3.0, 3.95), (1.9, 5.0), (1.8, 6.45), (2.9, 7.75), (4.6, 8.4), (6.6, 8.5), (8.5, 8.0), (9.5, 6.9),
-            (8.95, 5.7), (7.4, 4.6), (5.8, 3.8), (4.45, 3.3)]
-    tail = [(3.1, 1.8), (1.9, 0.2), (1.1, -1.6), (1.25, -3.2), (2.6, -4.4), (4.6, -5.0), (7.0, -5.2), (9.9, -5.15)]
-    return dict(strokes=[(loop + tail, 'land', 'flick')], cuts={}, bowl=(5.0, -2.5), top=(5.6, 10.4))
+    S = [(tr(H_OVAL, KH, JH, H_JY), 'land', 'join'), (tr(H_DESC, KH, JH, H_JY), 'join', 'flick')]
+    return dict(strokes=S, cuts={}, bowl=tr([(271, 462)], KH, JH, H_JY)[0], top=tr([(220, 205)], KH, JH, H_JY)[0])
 
 def hah_fina():
-    rc = 16.0
-    P = [(rc + 0.7, 0.0), (rc, 0.0), (13.5, -0.42), (11.0, -0.82), (8.5, -1.22), (6.8, -1.42), (5.6, -1.15), (4.6, -0.95),
-         (3.6, -1.35), (2.8, -2.3), (2.5, -3.35), (2.95, -3.95), (4.4, -3.9), (5.8, -4.0), (6.25, -4.3), (5.3, -5.1),
-         (3.4, -6.3), (1.8, -7.6), (0.95, -9.0), (1.25, -10.2), (2.8, -10.9), (4.8, -11.0), (7.2, -10.5)]
-    return dict(strokes=[(P, 'join', 'flick')], cuts=dict(right=rc), bowl=(4.3, -8.1), top=(3.5, 1.0))
+    rc = 7.2
+    conn = [(rc + 0.7, 0.0), (rc, 0.0), (5.8, 0.1), (4.5, 0.6), (3.5, 1.7), (2.8, 3.1), (2.35, 4.4)]
+    oval = tr([(307, 300), (285, 272), (220, 261), (155, 272), (122, 300), (140, 330), (200, 345), (250, 348), (290, 332),
+               (305, 312)], KH, JH, H_JY)
+    S = [(conn + oval, 'join', 'join'), (tr(H_DESC, KH, JH, H_JY), 'join', 'flick')]
+    return dict(strokes=S, cuts=dict(right=rc), bowl=tr([(271, 462)], KH, JH, H_JY)[0], top=tr([(220, 205)], KH, JH, H_JY)[0])
 
+# the closed triangle head of initial/medial ح, from الرحيم
+KT, JT = 0.0671, (389, 313)
+TRI = [(389, 311), (392, 285), (397, 258), (404, 237), (414, 240), (428, 255), (441, 271), (445, 288), (440, 302),
+       (420, 307), (400, 311), (389, 313)]
+
+def hah_init(dot=None):
+    S = [(tr(TRI, KT, JT) + [(-1.0, 0.0), (-1.7, 0.0)], 'land', 'join')]
+    return dict(strokes=S, cuts=dict(left=-1.0), apex=(1.1, 5.1))
+
+def hah_medi(dot=None):
+    rc = 5.0
+    S = [(tr(TRI, KT, JT) + [(-1.0, 0.0), (-1.7, 0.0)], 'land', 'join'),
+         ([(rc + 0.7, 0.0), (rc, 0.0), (4.4, 0.08), (3.85, 0.4), (3.42, 0.74)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=-1.0, right=rc), apex=(1.1, 5.1))
+
+# ---- ع غ : open 'c' head with its tongue, long bowl (new ع sample) ----
+KA, JA = 0.0436, (532, 402)
+A_HEAD = [(588, 296), (555, 286), (522, 295), (505, 320), (503, 350), (513, 380), (532, 400), (560, 392), (600, 377),
+          (640, 363), (660, 356)]
+A_BOWL = [(532, 402), (505, 430), (488, 465), (487, 500), (493, 530), (510, 560), (545, 588), (600, 603), (650, 600),
+          (700, 592), (742, 584)]
+A_JY = -5.65 + (603 - 402) * KA
 
 def ain_isol():
-    head = [(4.65, 7.95), (3.7, 7.35), (2.75, 6.35), (2.05, 5.2), (2.0, 4.25), (2.55, 3.6), (3.4, 3.35), (4.6, 3.75),
-            (5.8, 4.35), (6.7, 4.85), (7.15, 5.0)]
-    bowl = [(3.2, 3.5), (2.65, 2.0), (2.35, 0.0), (2.6, -2.0), (3.6, -3.9), (5.2, -5.1), (6.8, -5.5), (8.6, -5.2),
-            (10.5, -4.1), (12.0, -2.6), (12.85, -1.5)]
-    return dict(strokes=[(head, 'land', 'flick'), (bowl, 'join', 'flick')], cuts={}, top=(3.7, 9.9))
+    S = [(tr(A_HEAD, KA, JA, A_JY), 'land', 'flick'), (tr(A_BOWL, KA, JA, A_JY), 'join', 'flick')]
+    return dict(strokes=S, cuts={}, top=tr([(552, 232)], KA, JA, A_JY)[0])
 
 def ain_init():
-    S = [([(4.95, 4.75), (4.1, 4.55), (3.45, 3.8), (3.15, 2.6), (3.15, 1.5), (3.05, 1.0), (2.0, 0.5), (1.0, 0.15),
-           (0.0, 0.0), (-0.7, 0.0)], 'land', 'join'),
-         ([(3.15, 1.05), (4.6, 1.35), (6.2, 1.65), (7.5, 1.95), (8.1, 2.15)], 'join', 'flick')]
-    return dict(strokes=S, cuts=dict(left=0.0), top=(3.9, 6.7))
+    S = [(tr(A_HEAD, KA, JA), 'land', 'flick'), ([(0.05, 0.02), (-1.0, 0.0), (-2.0, 0.0), (-2.7, 0.0)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=-2.0), top=tr([(552, 232)], KA, JA)[0])
+
+def ain_fina():
+    rc = 6.9
+    P = [(rc + 0.7, 0.0), (rc, 0.0), (5.6, 0.1), (4.3, 0.6), (3.2, 1.5), (2.3, 2.6), (1.55, 3.5), (1.0, 4.2), (0.5, 5.1),
+         (0.75, 6.1), (1.6, 6.45), (2.35, 5.95), (2.3, 5.0), (1.5, 3.95), (0.6, 3.3)] + tr(A_BOWL, KA, JA, A_JY)
+    return dict(strokes=[(P, 'join', 'flick')], cuts=dict(right=rc), top=(1.4, 8.3))
+
+# ---- ص ض : starting tick, tilted leaf loop, deep bowl (new ص sample) ----
+KS, JS = 0.0319, (1165, 465)
+S_TICK = [(1085, 393), (1112, 415), (1140, 440), (1165, 465)]
+S_LOOP = [(1165, 465), (1195, 425), (1225, 382), (1258, 345), (1292, 322), (1326, 318), (1350, 334), (1351, 362),
+          (1328, 386), (1288, 404), (1242, 422), (1200, 445), (1172, 470)]
+S_BOWL = [(1165, 465), (1180, 505), (1178, 540), (1160, 570), (1120, 592), (1060, 600), (1000, 593), (950, 572),
+          (918, 540), (912, 500), (925, 463), (955, 435)]
+S_JY = 0.55 + (600 - 465) * KS            # isolated ص: the bowl sits on the line
+S_DOT = (1300, 262)
+
+def sad_parts(Jy):
+    return [(tr(S_TICK, KS, JS, Jy), 'land', 'join'), (tr(S_LOOP, KS, JS, Jy), 'join', 'join')]
+
+def sad_isol():
+    S = sad_parts(S_JY) + [(tr(S_BOWL, KS, JS, S_JY), 'join', 'flick')]
+    return dict(strokes=S, cuts={}, top=tr([S_DOT], KS, JS, S_JY)[0])
+
+def sad_init():
+    S = sad_parts(0.0) + [([(0.05, 0.02), (-1.5, 0.0), (-3.2, 0.0), (-3.9, 0.0)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=-3.2), top=tr([S_DOT], KS, JS)[0])
+
+def sad_medi():
+    rc = 6.5
+    S = sad_parts(0.0) + [([(0.05, 0.02), (-1.5, 0.0), (-3.2, 0.0), (-3.9, 0.0)], 'join', 'join'),
+                          ([(rc + 0.7, 0.0), (rc, 0.0), (4.5, 0.0), (2.5, 0.03), (1.0, 0.05), (0.1, 0.05)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=-3.2, right=rc), top=tr([S_DOT], KS, JS)[0])
+
+def sad_fina():
+    rc = 6.5
+    S = sad_parts(0.0) + [(tr(S_BOWL, KS, JS), 'join', 'flick'),
+                          ([(rc + 0.7, 0.0), (rc, 0.0), (4.5, 0.0), (2.5, 0.03), (1.0, 0.05), (0.1, 0.05)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(right=rc), top=tr([S_DOT], KS, JS)[0])
+
 
 def ain_medi():
     """The writer's medial ع: a small filled triangle sitting on the line."""
@@ -142,60 +186,18 @@ def ain_medi():
          ([(3.6, 0.6), (3.6, 1.2)], 'join', 'join')]          # fills the triangle: a blind head, no pinhole
     return dict(strokes=S, cuts=dict(left=0.0, right=rc), top=(3.6, 3.35))
 
-def ain_fina():
-    rc = 11.35
-    P = [(rc + 0.7, 0.0), (rc, 0.0), (9.5, -0.35), (7.5, -0.95), (5.6, -1.45), (4.3, -1.35), (3.4, -0.75), (3.0, 0.3),
-         (3.1, 1.6), (3.8, 2.9), (4.8, 3.5), (5.7, 3.2), (5.6, 2.2), (4.6, 1.0), (3.4, 0.0), (2.4, -1.3), (1.7, -3.2),
-         (1.8, -5.3), (2.8, -7.2), (4.5, -8.6), (6.6, -9.3), (8.7, -8.8), (10.4, -7.3), (11.55, -5.6)]
-    return dict(strokes=[(P, 'join', 'flick')], cuts=dict(right=rc), top=(4.6, 5.6))
-
-
-def sad_body(T, medi=False):
-    """tooth at T, flat base, the writer's leaf loop standing on it."""
-    d = T - 5.95
-    path = [(-0.7, 0.0), (0.0, 0.0), (0.8, 0.08), (T - 3.9, 0.6), (T - 1.75, 1.35), (T - 0.7, 1.95), (T, 2.75),
-            (T + 0.45, 2.0), (T + 1.15, 1.3), (T + 2.45, 1.0), (T + 3.45, 0.95)]
-    loop = [(T + 3.45, 0.95), (T + 4.65, 1.6), (T + 6.05, 2.6), (T + 7.15, 3.6), (T + 7.35, 4.3), (T + 6.65, 4.65),
-            (T + 5.45, 4.3), (T + 4.35, 3.4), (T + 3.8, 2.3), (T + 3.65, 1.3)]
-    S = [(path + loop[1:], 'join', 'join')]
-    cuts = dict(left=0.0)
-    if medi:
-        rc = T + 8.4
-        S.append(([(T + 3.6, 1.1), (T + 4.6, 0.55), (T + 6.0, 0.15), (T + 7.4, 0.0), (rc, 0.0), (rc + 0.7, 0.0)], 'join', 'join'))
-        cuts['right'] = rc
-    return dict(strokes=S, cuts=cuts, top=(T + 5.9, 6.4))
-
-def sad_isol():
-    tick = [(7.55, 6.75), (8.2, 5.55), (8.75, 4.6)]
-    loop = [(8.75, 4.6), (10.6, 4.95), (12.5, 5.35), (14.2, 5.85), (15.7, 6.45), (16.45, 7.15), (16.1, 7.9), (14.95, 8.05),
-            (13.75, 7.45), (13.05, 6.45), (12.55, 5.4)]
-    bowl = [(8.75, 4.6), (8.7, 3.3), (8.15, 1.95), (6.9, 0.95), (5.0, 0.45), (3.3, 0.55), (2.0, 1.3), (1.45, 2.6),
-            (1.55, 4.0), (1.95, 5.2)]
-    return dict(strokes=[(tick, 'land', 'join'), (loop, 'join', 'join'), (bowl, 'join', 'flick')], cuts={}, top=(14.6, 9.9))
-
-def sad_fina():
-    rc = 15.5
-    P = [(rc + 0.7, 0.0), (rc, 0.0), (14.0, -0.4), (12.4, -1.1), (11.1, -1.45), (10.25, -0.85), (9.95, 0.6), (10.2, 1.6),
-         (11.1, 2.6), (12.4, 3.3), (13.6, 3.5), (14.15, 3.05), (13.6, 2.2), (12.2, 1.55), (10.8, 1.0), (9.4, 0.55),
-         (7.8, 0.15), (6.4, 0.05), (5.75, 0.9), (5.45, 1.85)]
-    bowl = [(5.45, 1.85), (5.75, 0.3), (5.65, -1.4), (4.6, -3.05), (3.0, -3.85), (1.55, -3.4), (0.8, -2.2), (0.7, -0.6),
-            (0.95, 1.0)]
-    return dict(strokes=[(P, 'join', 'join'), (bowl, 'join', 'flick')], cuts=dict(right=rc), top=(12.8, 5.4))
-
 
 def glyph_defs():
     G = {}
     for fam, dot in (('hah', None), ('jeem', 'below'), ('khah', 'above')):
-        i = hah_init(dot if dot == 'below' else None); m = hah_medi(dot if dot == 'below' else None)
+        s, i, m, f = hah_isol(), hah_init(), hah_medi(), hah_fina()
         for g in (i, m):
-            g['dots'] = [((g['apex'][0] - 0.35, g['apex'][1] + 1.9), DOT)] if dot == 'above' else []
-        s = hah_isol(); f = hah_fina()
-        s['dots'] = [] if dot is None else [(s['bowl'] if dot == 'below' else s['top'], DOT)]
-        f['dots'] = [] if dot is None else [(f['bowl'] if dot == 'below' else f['top'], DOT)]
-        G[fam] = s; G[fam + '.init'] = i; G[fam + '.medi'] = m; G[fam + '.fina'] = f
+            g['dots'] = [] if dot is None else [((1.6, -2.0) if dot == 'below' else (1.2, 6.8), DOT)]
+        for g in (s, f):
+            g['dots'] = [] if dot is None else [(g['bowl'] if dot == 'below' else g['top'], DOT)]
+        G[fam], G[fam + '.init'], G[fam + '.medi'], G[fam + '.fina'] = s, i, m, f
     for fam, dotted in (('ain', False), ('ghain', True), ('sad', False), ('dad', True)):
-        mk = (ain_isol, ain_init, ain_medi, ain_fina) if fam in ('ain', 'ghain') else \
-             (sad_isol, lambda: sad_body(4.2), lambda: sad_body(4.2, True), sad_fina)
+        mk = (ain_isol, ain_init, ain_medi, ain_fina) if fam in ('ain', 'ghain') else (sad_isol, sad_init, sad_medi, sad_fina)
         for suf, f in zip(('', '.init', '.medi', '.fina'), mk):
             g = f(); g['dots'] = [(g['top'], DOT)] if dotted else []
             G[fam + suf] = g

@@ -159,7 +159,7 @@ def run(inp, out, ref_scale=True):
         r_ = REF.get(name)
         if base is not None and r_ is not None and g['form'] in ('isol', 'digit') and not name.startswith('lamalef'):
             ys_, xs_ = np.where(m)                                  # seat it on the line like the reference first
-            base = float(ys_.max() - r_['down'] * alef_u * g['w'])
+            base = float(ys_.max() - max(r_['down'], 0.0) * alef_u * g['w'])   # never float above the line
         A, cuts = analyse_joined(m, base if base is not None else 0, g['form'], g['w'] * s, g['w'], GM[name].get('keep', False))
         if name.split('.')[0] in TALL and base is not None and name in REF:
             fam = name.split('.')[0]
