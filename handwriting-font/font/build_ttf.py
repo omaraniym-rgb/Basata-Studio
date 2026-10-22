@@ -62,7 +62,7 @@ def synth(shape, U):
     return img, left, left + shape['w'] * s, base
 
 
-def main(stage2='stage2.pkl', out='OmarHand'):
+def main(stage2='stage2r.pkl', out='OmarHand'):
     D = pickle.load(open(stage2, 'rb'))
     G, alef_u = D['glyphs'], D['alef_u']
     U = ALEF_UNITS / (alef_u * R_W)

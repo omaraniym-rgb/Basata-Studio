@@ -12,6 +12,7 @@ A Ruqʿah font made from one person's handwriting.
 pip install fonttools opencv-python-headless scikit-image scipy potracer pillow numpy brotli
 python3 extract.py stage1.pkl   # cut every letter from ../sources, straighten, find its baseline
 python3 stage2.py               # pen settings + Ruqʿah proportions + standard joins
+python3 redraw.py               # clean single-stroke redraws of ح ج خ ع غ ص ض (the rough-paper letters)
 python3 build_ttf.py "Omar Hand"
 ```
 
