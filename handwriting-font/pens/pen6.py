@@ -57,7 +57,7 @@ def continuation(A, w):
     return A
 
 
-def close_touches(A, w):
+def close_touches(A, w, extend=True):
     """An end that touches another stroke is a join, not a flick; an end that stops just short
     while pointing at a stroke is extended to meet it."""
     S = [s for s in A['strokes'] if not s.get('dot')]
@@ -76,7 +76,7 @@ def close_touches(A, w):
                 continue
             if best < 0.6 * w:
                 s['free'][e] = False; s.setdefault('touch', []).append(e)
-            elif best < 1.8 * w:
+            elif extend and best < 1.8 * w:
                 t = -_out_dir(s['p'], e == 0, w)               # direction the stroke was heading
                 u = (bp - pe) / (best + 1e-9)
                 if np.dot(t, u) > np.cos(np.radians(45)):
@@ -90,11 +90,11 @@ def close_touches(A, w):
     return A
 
 
-def analyse6(mask, w):
+def analyse6(mask, w, extend=True):
     A = analyse5(mask, w)                 # words + lines already fitted on the raw strokes
     W, lines = A['words'], A['lines']
     A = continuation(A, w)
-    A = close_touches(A, w)
+    A = close_touches(A, w, extend)
     A['words'], A['lines'] = W, lines
     return A
 
@@ -118,7 +118,7 @@ def _smooth2(p, sigma, closed, pin=True):
 
 
 def render6(A, shape, snap=0.0, fluency=0.0, stems=0.0, level=0.0, contrast=1.0, angle=68, flicks=0.0,
-            calm=0.0, weight=1.0):
+            calm=0.0, weight=1.0, heads=False):
     w, rmed = A['w'], A['rmed']
     sq = np.sqrt(contrast); heavy = np.array([-1.0, 1.0]) / np.sqrt(2)
     items = A['strokes'] + (A['bridges'] if fluency > 0.5 else [])
@@ -127,6 +127,11 @@ def render6(A, shape, snap=0.0, fluency=0.0, stems=0.0, level=0.0, contrast=1.0,
     for s in items:
         P = s['p'].copy()
         P[:, 1] += A['words'].get(s.get('word'), {}).get('delta', 0.0) * snap
+        if s.get('loop') and _length(P) < 2.5 * w:          # a pinhole in the ink, not a letter's loop
+            c = P.mean(0); R = float(np.hypot(*(P - c).T).mean())
+            rb = min(R + float(np.median(s['r'])), 1.7 * rmed) * (1 if heads else 0.9)
+            prep.append(dict(s=s, p=c[None], rm=np.array([rb]), re=np.array([rb]), ball=True))
+            continue
         if stems > 0 and s.get('stem'):
             st = s['stem']; piv = P[0] if st['pivot'] == 0 else P[-1]
             P = _rot(P, piv, -(A['stem_target'] - st['angle']) * stems)
@@ -134,9 +139,24 @@ def render6(A, shape, snap=0.0, fluency=0.0, stems=0.0, level=0.0, contrast=1.0,
             L = A['lines'][s['line']]
             if L.get('base'):
                 m, b = L['base']; cx = L['cx']; P = _rot(P, np.array([cx, m * cx + b]), L['angle'] * level)
-        rm = np.minimum(s['r'], 1.6 * rmed)
-        solid = not s.get('loop') and _length(s['p']) < 3 * w
+        rm = np.minimum(s['r'], (2.1 if heads else 1.6) * rmed)
+        solid = s.get('dot', False) if heads else (not s.get('loop') and _length(s['p']) < 3 * w)
         re = np.where((rm > 1.45 * rmed) & solid, np.minimum(rm, 1.45 * rmed), rmed)
+        head_end = []
+        if heads and not s.get('loop'):            # small filled loops (the Ruqʿah 'blind' heads) stay filled
+            hot = rm > 1.55 * rmed
+            if hot.any():
+                d0 = np.r_[0, np.cumsum(np.hypot(*np.diff(P if len(P) == len(rm) else s['p'], axis=0).T))]
+                idx = np.where(hot)[0]; runs = np.split(idx, np.where(np.diff(idx) > 1)[0] + 1)
+                Ls = d0[-1]
+                for run in runs:
+                    e0 = s['free'][0] and d0[run[0]] < 1.5 * w
+                    e1 = s['free'][1] and Ls - d0[run[-1]] < 1.5 * w
+                    ln = d0[run[-1]] - d0[run[0]]; pk = rm[run].max()
+                    if (e0 or e1 or s.get('blind')) and pk >= 1.9 * rmed and (ln >= 0.6 * w or pk >= 2.4 * rmed) and ln <= 3.4 * w:
+                        lo, hi = (0 if e0 else run[0]), (len(re) if e1 else run[-1] + 1)
+                        re[lo:hi] = np.maximum(re[lo:hi], np.minimum(rm[lo:hi], 2.0 * rmed))
+                        head_end.extend([0] if e0 else [1])
         if fluency > 0 and s.get('loop'):
             lp = s['loop']; need = rmed * 1.15 + 0.42 * w
             if lp['R'] < need:
@@ -152,15 +172,15 @@ def render6(A, shape, snap=0.0, fluency=0.0, stems=0.0, level=0.0, contrast=1.0,
         else:
             p = _smooth2(p, sig, s['closed'])
         rm_ = gaussian_filter1d(rm_, max(0.5, calm * 1.2 * w + 0.15 * w), mode='wrap' if s['closed'] else 'nearest') if len(rm_) > 3 else rm_
-        prep.append(dict(s=s, p=p, rm=rm_, re=re_))
+        prep.append(dict(s=s, p=p, rm=rm_, re=re_, head_end=head_end))
     # ---- pass 2: glue junction ends back onto the line they meet (no pen breaks) ----
     if fluency > 0:
         allp = [(i, q['p']) for i, q in enumerate(prep)]
         for i, q in enumerate(prep):
             s = q['s']
-            if s['closed'] or len(q['p']) < 3: continue
+            if q.get('ball') or s['closed'] or len(q['p']) < 3: continue
             for e in (0, 1):
-                if s['free'][e]: continue
+                if s['free'][e] or e in s.get('joined', []): continue
                 end = q['p'][0 if e == 0 else -1]
                 bd, bp = 1e9, None
                 for j, pj in allp:
@@ -175,9 +195,14 @@ def render6(A, shape, snap=0.0, fluency=0.0, stems=0.0, level=0.0, contrast=1.0,
     canvas = np.zeros(shape, np.uint8)
     for q in prep:
         s, p, rm_, re_ = q['s'], q['p'], q['rm'], q['re']
+        if q.get('ball'):
+            x, y = p[0]; rr = re_[0] * weight
+            cv2.ellipse(canvas, (int(x * 16), int(y * 16)), (max(1, int(rr * sq * 16)), max(1, int(rr / sq * 16))),
+                        -angle, 0, 360, 1, -1, cv2.LINE_8, 4)
+            continue
         n = len(p)
         d = np.r_[0, np.cumsum(np.hypot(*np.diff(p, axis=0).T))] if n > 1 else np.zeros(1); L_ = d[-1]
-        free = [f and not (fluency > 0.5 and bb) for f, bb in zip(s['free'], s['bridged'])]
+        free = [f and not (fluency > 0.5 and bb) and e not in q.get('head_end', []) for e, (f, bb) in enumerate(zip(s['free'], s['bridged']))]
         if fluency <= 0.5:
             free = [f or (e in s.get('touch', [])) for e, f in enumerate(free)]
         ex = 0 if (-p[0, 0] + .8 * p[0, 1]) > (-p[-1, 0] + .8 * p[-1, 1]) else 1

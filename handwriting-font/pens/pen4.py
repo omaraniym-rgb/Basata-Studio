@@ -16,6 +16,7 @@ from pen2 import trace
 from pen3 import _resample, _smooth
 
 RING = [(-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)]
+SPUR = (1.35, 0.3)      # a spur shorter than this (x ink radius at its root, + x pen width) is a blob, not a stroke
 
 
 def _ends(sk):
@@ -42,7 +43,7 @@ def clean_skeleton(mask, w, dt):
             if f0 == f1:
                 continue
             j = P[-1] if f0 else P[0]
-            if _length(P) < 1.35 * dt[j[1], j[0]] + 0.3 * w:
+            if _length(P) < SPUR[0] * dt[j[1], j[0]] + SPUR[1] * w:
                 body = P[:-1] if f0 else P[1:]
                 sk[body[:, 1], body[:, 0]] = False; changed = True
         if not changed:
