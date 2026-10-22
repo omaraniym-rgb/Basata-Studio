@@ -13,9 +13,10 @@ pip install fonttools opencv-python-headless scikit-image scipy potracer pillow 
 python3 extract.py stage1.pkl   # cut every letter from ../sources, straighten, find its baseline
 python3 stage2.py               # pen settings + Ruqʿah proportions + standard joins
 python3 redraw.py               # ح ج خ ع غ ص ض traced from the clean samples (sources/src9, src10)
-python3 build_ttf.py "Omar Hand"
+python3 build_ttf.py "Omar Hand"   # seams.py: every join ends in one standard connector on the baseline
 ```
 
 - Letter map: `glyphmap.py`
+- ح ج خ ع غ ص ض: alone = traced from the clean samples; joined = standard Ruqʿah (ـص ـض use the ـط loop), see `redraw.py`
 - Pen: `stage2.PEN` (the Pen Lab settings)
 - Proportions are measured against Aref Ruqaa (OFL), downloaded to the scratch folder at build time (see `proportions.REF`).

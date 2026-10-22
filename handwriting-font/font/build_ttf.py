@@ -11,6 +11,10 @@ from pen6 import render6
 from stage2 import PEN, R_W
 from names import BASE, PRES, OFF
 from punctuation import SHAPES
+from seams import seam
+
+T_JOIN = 47          # one connector thickness for the whole font (px at R_W=44)
+SIDES = {'init': ('left',), 'medi': ('left', 'right'), 'fina': ('right',)}
 
 FAMILY = sys.argv[1] if len(sys.argv) > 1 else 'Omar Hand'
 ALEF_UNITS = 620
@@ -72,7 +76,13 @@ def main(stage2='stage2r.pkl', out='OmarHand'):
     for name, g in G.items():
         if g['form'] == 'mark':
             continue
-        glyphs[name] = glyph_from_img(g['img'], g['left'], g['base'], U)
+        img = g['img'].copy()
+        sides = SIDES.get(g['form'], ()) or (('right',) if name == 'lamalef.fina' else ())
+        for sd in sides:
+            seam(img, g['left'] if sd == 'left' else g['right'], sd, g['base'], T_JOIN, R_W)
+        g['img'] = img
+        ys_, xs_ = np.where(img); g['ink'] = (xs_.min(), ys_.min(), xs_.max(), ys_.max())
+        glyphs[name] = glyph_from_img(img, g['left'], g['base'], U)
         adv[name] = int(round((g['right'] - g['left']) * U))
         x0, y0, x1, y1 = g['ink']
         cx = ((max(x0, g['left']) + min(x1, g['right'])) / 2 - g['left']) * U
@@ -92,6 +102,8 @@ def main(stage2='stage2r.pkl', out='OmarHand'):
     # punctuation + tatweel
     for name, sh in SHAPES.items():
         img, l, r, base = synth(sh, U)
+        if sh.get('join'):
+            seam(img, l, 'left', base, T_JOIN, R_W); seam(img, r, 'right', base, T_JOIN, R_W)
         if sh.get('mark'):
             k = 0.62; img = cv2.resize(img.astype(np.uint8), None, fx=k, fy=k, interpolation=cv2.INTER_AREA) > 0
             ys, xs = np.where(img); cx, cy = (xs.min() + xs.max()) / 2, (ys.min() + ys.max()) / 2

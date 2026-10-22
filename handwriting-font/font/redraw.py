@@ -100,12 +100,12 @@ def hah_isol():
     return dict(strokes=S, cuts={}, bowl=tr([(271, 462)], KH, JH, H_JY)[0], top=tr([(220, 205)], KH, JH, H_JY)[0])
 
 def hah_fina():
-    rc = 7.2
-    conn = [(rc + 0.7, 0.0), (rc, 0.0), (5.8, 0.1), (4.5, 0.6), (3.5, 1.7), (2.8, 3.1), (2.35, 4.4)]
-    oval = tr([(307, 300), (285, 272), (220, 261), (155, 272), (122, 300), (140, 330), (200, 345), (250, 348), (290, 332),
-               (305, 312)], KH, JH, H_JY)
-    S = [(conn + oval, 'join', 'join'), (tr(H_DESC, KH, JH, H_JY), 'join', 'flick')]
-    return dict(strokes=S, cuts=dict(right=rc), bowl=tr([(271, 462)], KH, JH, H_JY)[0], top=tr([(220, 205)], KH, JH, H_JY)[0])
+    """Standard final ح on a flat line: the connector climbs into a pointed head, then the writer's bowl."""
+    rc, ay = 6.4, 3.5
+    d0 = tr(H_DESC, KH, (262, 342), ay)            # the writer's descent + bowl, hanging from the head point
+    conn = [(rc + 0.7, 0.0), (rc, 0.0), (4.9, 0.05), (3.7, 0.45), (2.5, 1.3), (1.4, 2.35), (0.55, 3.2), (0.0, ay)]
+    S = [(conn + d0[1:], 'join', 'flick')]
+    return dict(strokes=S, cuts=dict(right=rc), bowl=(-1.9, -3.3), top=(-0.4, 5.6))
 
 # the closed triangle head of initial/medial ح, from الرحيم
 KT, JT = 0.0671, (389, 313)
@@ -139,10 +139,13 @@ def ain_init():
     return dict(strokes=S, cuts=dict(left=-2.0), top=tr([(552, 232)], KA, JA)[0])
 
 def ain_fina():
-    rc = 6.9
-    P = [(rc + 0.7, 0.0), (rc, 0.0), (5.6, 0.1), (4.3, 0.6), (3.2, 1.5), (2.3, 2.6), (1.55, 3.5), (1.0, 4.2), (0.5, 5.1),
-         (0.75, 6.1), (1.6, 6.45), (2.35, 5.95), (2.3, 5.0), (1.5, 3.95), (0.6, 3.3)] + tr(A_BOWL, KA, JA, A_JY)
-    return dict(strokes=[(P, 'join', 'flick')], cuts=dict(right=rc), top=(1.4, 8.3))
+    """Standard final ع on a flat line: a small closed head, then the writer's bowl (scaled to Ruqʿah depth)."""
+    rc = 5.2
+    J = (0.45, 0.65)
+    bowl = [(J[0] + (x - JA[0]) * KA * 0.75, J[1] + (JA[1] - y) * KA * 0.75) for x, y in A_BOWL]
+    P = [(rc + 0.7, 0.0), (rc, 0.0), (3.7, 0.04), (2.5, 0.2), (1.6, 0.6), (0.95, 1.3), (0.8, 2.3), (1.35, 3.1), (2.15, 3.2),
+         (2.55, 2.6), (2.25, 1.7), (1.45, 1.0)] + bowl
+    return dict(strokes=[(P, 'join', 'flick')], cuts=dict(right=rc), top=(1.65, 5.0))
 
 # ---- ص ض : starting tick, tilted leaf loop, deep bowl (new ص sample) ----
 KS, JS = 0.0319, (1165, 465)
@@ -154,28 +157,35 @@ S_BOWL = [(1165, 465), (1180, 505), (1178, 540), (1160, 570), (1120, 592), (1060
 S_JY = 0.55 + (600 - 465) * KS            # isolated ص: the bowl sits on the line
 S_DOT = (1300, 262)
 
-def sad_parts(Jy):
-    return [(tr(S_TICK, KS, JS, Jy), 'land', 'join'), (tr(S_LOOP, KS, JS, Jy), 'join', 'join')]
-
 def sad_isol():
-    S = sad_parts(S_JY) + [(tr(S_BOWL, KS, JS, S_JY), 'join', 'flick')]
+    S = [(tr(S_TICK, KS, JS, S_JY), 'land', 'join'), (tr(S_LOOP, KS, JS, S_JY), 'join', 'join'),
+         (tr(S_BOWL, KS, JS, S_JY), 'join', 'flick')]
     return dict(strokes=S, cuts={}, top=tr([S_DOT], KS, JS, S_JY)[0])
 
+# the writer's ـط loop (from طـ / ـط), 1.3x for ص: a tilted leaf sitting on the line, bottom point B at the origin
+T_LOOP = [(0.0, 0.3), (1.0, 0.55), (1.95, 1.3), (2.6, 2.6), (1.05, 3.6), (-0.8, 2.85), (-1.7, 1.25), (-1.5, 0.4)]
+TL_DOT = (0.9, 5.3)
+
+def loop_at(xb):
+    return [(x + xb, y) for x, y in T_LOOP]
+
 def sad_init():
-    S = sad_parts(0.0) + [([(0.05, 0.02), (-1.5, 0.0), (-3.2, 0.0), (-3.9, 0.0)], 'join', 'join')]
-    return dict(strokes=S, cuts=dict(left=-3.2), top=tr([S_DOT], KS, JS)[0])
+    xb = 2.6
+    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.5, 0.06), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join')]
+    return dict(strokes=S, cuts=dict(left=0.0), top=(TL_DOT[0] + xb, TL_DOT[1]))
 
 def sad_medi():
-    rc = 6.5
-    S = sad_parts(0.0) + [([(0.05, 0.02), (-1.5, 0.0), (-3.2, 0.0), (-3.9, 0.0)], 'join', 'join'),
-                          ([(rc + 0.7, 0.0), (rc, 0.0), (4.5, 0.0), (2.5, 0.03), (1.0, 0.05), (0.1, 0.05)], 'join', 'join')]
-    return dict(strokes=S, cuts=dict(left=-3.2, right=rc), top=tr([S_DOT], KS, JS)[0])
+    xb, rc = 2.6, 6.3
+    S = [([(xb - 1.6, 0.35)] + loop_at(xb) + [(xb - 2.5, 0.06), (0.0, 0.0), (-0.7, 0.0)], 'land', 'join'),
+         ([(rc + 0.7, 0.0), (rc, 0.0), (xb + 2.4, 0.05), (xb + 1.0, 0.22), (xb, 0.3)], 'join', 'join')]
+    return dict(strokes=S, cuts=dict(left=0.0, right=rc), top=(TL_DOT[0] + xb, TL_DOT[1]))
 
 def sad_fina():
-    rc = 6.5
-    S = sad_parts(0.0) + [(tr(S_BOWL, KS, JS), 'join', 'flick'),
-                          ([(rc + 0.7, 0.0), (rc, 0.0), (4.5, 0.0), (2.5, 0.03), (1.0, 0.05), (0.1, 0.05)], 'join', 'join')]
-    return dict(strokes=S, cuts=dict(right=rc), top=tr([S_DOT], KS, JS)[0])
+    xb, rc = 8.9, 12.6
+    J = loop_at(xb)[-1]
+    bowl = [(J[0] + (x - JS[0]) * KS, J[1] + (JS[1] - y) * KS) for x, y in S_BOWL]
+    S = [([(rc + 0.7, 0.0), (rc, 0.0), (xb + 2.4, 0.05), (xb + 1.0, 0.22)] + loop_at(xb) + bowl[1:], 'join', 'flick')]
+    return dict(strokes=S, cuts=dict(right=rc), top=(TL_DOT[0] + xb, TL_DOT[1]))
 
 
 def ain_medi():

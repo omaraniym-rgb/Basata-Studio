@@ -176,6 +176,13 @@ def run(inp, out, ref_scale=True):
         Ak['w'] = R_W; Ak['rmed'] = A['rmed'] * k / s          # one physical pen for every glyph
         for st in Ak['strokes'] + Ak['bridges']: st['r'] = st['r'] / s   # thickness is the pen's, not the letter's size
         H, W = int(m.shape[0] * k) + 2 * pad, int(m.shape[1] * k) + 2 * pad
+        top = min(float(st['p'][:, 1].min()) for st in Ak['strokes'] + Ak['bridges'] if len(st['p']))
+        lift = max(0, int(2 * R_W - top))          # stretched ascenders must stay on the canvas
+        if lift:
+            for st in Ak['strokes'] + Ak['bridges']:
+                st['p'] = st['p'] + np.array([0, lift])
+                if st.get('loop'): st['loop']['pivot'][1] += lift
+            H += lift
         if name == 'digit0':
             img = np.zeros((H, W), bool); cy, cx = int(X_(m.shape[0] / 2, k, pad)), int(X_(m.shape[1] / 2, k, pad))
             cv2.ellipse(img.view(np.uint8), (cx, cy), (int(0.95 * R_W), int(0.7 * R_W)), -40, 0, 360, 1, -1)
@@ -195,7 +202,7 @@ def run(inp, out, ref_scale=True):
                 full = np.zeros_like(img); full[pad:pad + hk.shape[0], pad:pad + hk.shape[1]] = hk[:H - pad, :W - pad] > 0
                 img &= ~full
         if base_s is not None:                 # clear beyond the joins, but only in the connector band:
-            y0b, y1b = max(0, int(X(base_s) - 1.7 * R_W)), int(X(base_s) + 1.7 * R_W)     # stems and tails may overhang
+            y0b, y1b = max(0, int(X(base_s) + lift - 1.7 * R_W)), int(X(base_s) + lift + 1.7 * R_W)   # stems and tails may overhang
             if 'left' in cuts: img[y0b:y1b, :max(0, int(X(cuts['left'] - OVER * w)))] = False
             if 'right' in cuts: img[y0b:y1b, int(X(cuts['right'] + OVER * w)):] = False
         ys, xs = np.where(img)
@@ -203,7 +210,7 @@ def run(inp, out, ref_scale=True):
             print('empty', name); continue
         left = X(cuts['left']) if 'left' in cuts else xs.min() - SIDE * R_W
         right = X(cuts['right']) if 'right' in cuts else xs.max() + SIDE * R_W
-        base = X(base_s) if base_s is not None else None
+        base = X(base_s) + lift if base_s is not None else None
         res[name] = dict(img=img, left=left, right=right, base=base, form=g['form'], side=g.get('side'),
                          rw=R_W, ink=(xs.min(), ys.min(), xs.max(), ys.max()), scale=s)
         print('.', end='', flush=True)
