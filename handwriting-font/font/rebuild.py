@@ -282,6 +282,18 @@ DAL_FINA = [([(4.4, 0.0), (3.6, 0.0), (2.9, 0.02), (2.45, 0.1)], False, [False, 
 CUSTOM['dal.fina'] = dict(form='fina', right=4.4, strokes=DAL_FINA)
 CUSTOM['thal.fina'] = dict(form='fina', right=4.4, strokes=DAL_FINA, dots=[(2.3, 4.2)])
 
+# حـ جـ خـ : the standard Ruqʿah head, as on the letter sheet and in حرام: one stroke without lifting the pen. It starts
+# just under the line, climbs to a round top, drops to the point, and comes back down the slanted base onto the line.
+HT = 1.0                                           # head start (pen widths right of the left join)
+HAH_ARCH = [(HT + 0.75, -0.45), (HT + 0.98, 0.55), (HT + 1.4, 2.0), (HT + 1.95, 3.45), (HT + 2.55, 4.5), (HT + 3.15, 5.0),
+            (HT + 3.75, 4.85), (HT + 4.45, 4.35), (HT + 5.05, 3.7), (HT + 5.45, 3.2)]
+HAH_BASE = [(HT + 5.45, 3.2), (HT + 4.5, 2.55), (HT + 3.4, 1.8), (HT + 2.2, 1.05), (HT + 1.1, 0.38), (HT + 0.25, 0.06),
+            (HT - 0.6, 0.0), (0.0, 0.0)]
+_HAH_HEAD = [(HAH_ARCH, False, [True, False]), (HAH_BASE, False, [False, False])]
+CUSTOM['hah.init'] = dict(form='init', strokes=_HAH_HEAD)
+CUSTOM['jeem.init'] = dict(form='init', strokes=_HAH_HEAD, dots=[(HT + 3.1, -1.1)])
+CUSTOM['khah.init'] = dict(form='init', strokes=_HAH_HEAD, dots=[(HT + 3.3, 6.6)])
+
 # ح ج خ joined: the stacked Ruqʿah form from the notebook (تحول, المرابحة). The letter before sits up on the head:
 # the pen enters at the top (STK), runs left-down to the vertex, flicks back right, then one long diagonal to the line.
 STK = 5.6                                          # entry height (pen widths): the shaping engine lifts the letters before
@@ -292,7 +304,7 @@ HAH_STK_DIAG = [(5.3, STK - 2.85), (5.5, STK - 3.1), (5.3, STK - 3.45), (4.7, 1.
                 (0.5, 0.0), (-0.5, 0.0)]
 CUSTOM['hah.medi'] = dict(form='medi', right=6.0, entry_y=STK, strokes=[
     (HAH_STK_MEDI, False, [False, False]), (HAH_STK_TURN[:-1] + HAH_STK_DIAG, False, [False, False])])
-CUSTOM['jeem.medi'] = dict(CUSTOM['hah.medi'], dots=[(4.2, 0.55)])
+CUSTOM['jeem.medi'] = dict(CUSTOM['hah.medi'], dots=[(3.3, -0.45)])
 CUSTOM['khah.medi'] = dict(CUSTOM['hah.medi'], dots=[(3.3, STK + 1.35)])
 
 
