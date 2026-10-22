@@ -68,7 +68,7 @@ def rail(P, closed):
     g = np.gradient(S, axis=0)
     ang = np.degrees(np.arctan2(np.abs(g[:, 1]), np.abs(g[:, 0]) + 1e-9))
     sm = lambda v, a, b: np.clip((v - a) / (b - a), 0, 1) ** 2 * (3 - 2 * np.clip((v - a) / (b - a), 0, 1))
-    w = (1 - sm(ang, 15, 35)) * (1 - sm(np.abs(Q[:, 1]), 0.5, 0.95))
+    w = (1 - sm(ang, 10, 24)) * (1 - sm(np.abs(Q[:, 1]), 0.4, 0.75))
     w = gaussian_filter1d(w, 8, mode=mode)
     Q[:, 1] = Q[:, 1] * (1 - np.clip(w * 1.15, 0, 1))
     return Q
@@ -134,11 +134,13 @@ def rebuild_glyph(g, name):
     sides = SIDES.get(form, ()) or (('right',) if name == 'lamalef.fina' else ())
     fam = name.split('.')[0]
     if sides and fam not in ('seen', 'sheen'):          # one measured run between letters, everywhere
-        P = np.vstack([s['p'] for s in strokes] + heads)
-        body = P[np.abs(P[:, 1]) > 0.45]
+        P = np.vstack([s['p'] for s in strokes if s['p'][:, 1].min() < 3.5] + heads)    # floating dashes don't count
+        body = P[np.abs(P[:, 1]) > 0.8]
         if len(body):
-            x0 = body[:, 0].min() - CL if 'left' in sides else 0.0
-            x1 = body[:, 0].max() + CL if 'right' in sides else right
+            near = body[(body[:, 1] > -2.6) & (body[:, 1] < 3.0)]   # nor a tail swinging under, nor a leaning stem top
+            near = near if len(near) else body
+            x0 = body[body[:, 1] > -2.6][:, 0].min() - CL if 'left' in sides else 0.0
+            x1 = near[:, 0].max() + CL if 'right' in sides else right
             cut = []
             for s in strokes:
                 p = s['p'] - [x0, 0]
@@ -188,7 +190,7 @@ def rebuild_glyph(g, name):
             for e in (0, 1):
                 x, y = s['p'][0 if e == 0 else -1]
                 dd = np.hypot(x - gx, 1.6 * y)
-                if dd < 2.6 and (best is None or dd < best[0]): best = (dd, si, e)
+                if dd < 3.4 and (best is None or dd < best[0]): best = (dd, si, e)
         if best: ends[(best[1], best[2])] = side
     for si, s in enumerate(strokes):                    # ends at a join edge: laid onto the baseline, run into the edge
         for e in (0, 1):
@@ -250,7 +252,7 @@ def render(G, pad=3.0):
     right = X(np.array([[G['right'], 0]]))[0, 0] if G['right'] is not None else xs.max() + SIDE * R_W
     base = ymax * R_W
     return dict(img=img, left=left, right=right, base=base, form=G['form'], side=G['side'], rw=R_W,
-                ink=(xs.min(), ys.min(), xs.max(), ys.max()), scale=1.0)
+                ink=(xs.min(), ys.min(), xs.max(), ys.max()), scale=1.0, entry_y=G.get('entry_y', 0.0))
 
 
 # letters drawn directly as pen paths (pen-width units, origin = left join on the baseline)
@@ -271,6 +273,66 @@ CUSTOM['seen.init'] = dict(form='init', strokes=[
     ([(4.0, 1.0), (3.75, 0.45), (3.45, 0.08), (2.9, 0.0), (1.6, 0.0), (0.0, 0.0)], False, [True, False])])
 CUSTOM['seen.medi'] = dict(form='medi', right=3.6, strokes=[
     ([(3.6, 0.0), (2.6, 0.0), (1.2, 0.0), (0.0, 0.0)], False, [False, False])])
+
+
+# ـد ـذ : from the notebook sheet, the run on the line, a short upright, and a light flick away down-left
+DAL_FINA = [([(4.4, 0.0), (3.6, 0.0), (2.9, 0.02), (2.45, 0.1)], False, [False, False]),
+            ([(2.4, 0.12), (2.38, 1.0), (2.5, 2.0), (2.85, 2.8)], False, [False, True]),
+            ([(2.45, 0.1), (1.9, -0.12), (1.0, -0.42), (0.0, -0.72)], False, [False, True])]
+CUSTOM['dal.fina'] = dict(form='fina', right=4.4, strokes=DAL_FINA)
+CUSTOM['thal.fina'] = dict(form='fina', right=4.4, strokes=DAL_FINA, dots=[(2.3, 4.2)])
+
+# ح ج خ joined: the stacked Ruqʿah form from the notebook (تحول, المرابحة). The letter before sits up on the head:
+# the pen enters at the top (STK), runs left-down to the vertex, flicks back right, then one long diagonal to the line.
+STK = 5.6                                          # entry height (pen widths): the shaping engine lifts the letters before
+HAH_STK_MEDI = [(6.75, STK), (6.0, STK - 0.08), (5.0, STK - 0.6), (3.9, STK - 1.45), (3.0, STK - 2.3)]
+# the deep "<" of the notebook: the flick runs back almost under the entry, then turns round into the diagonal
+HAH_STK_TURN = [(3.0, STK - 2.3), (4.0, STK - 2.5), (4.85, STK - 2.68), (5.3, STK - 2.85)]
+HAH_STK_DIAG = [(5.3, STK - 2.85), (5.5, STK - 3.1), (5.3, STK - 3.45), (4.7, 1.75), (3.7, 1.1), (2.6, 0.5), (1.5, 0.12),
+                (0.5, 0.0), (-0.5, 0.0)]
+CUSTOM['hah.medi'] = dict(form='medi', right=6.0, entry_y=STK, strokes=[
+    (HAH_STK_MEDI, False, [False, False]), (HAH_STK_TURN[:-1] + HAH_STK_DIAG, False, [False, False])])
+CUSTOM['jeem.medi'] = dict(CUSTOM['hah.medi'], dots=[(4.2, 0.55)])
+CUSTOM['khah.medi'] = dict(CUSTOM['hah.medi'], dots=[(3.3, STK + 1.35)])
+
+
+def _hah_fina_stk():
+    from redraw import tr, H_DESC, KH
+    W = np.array(HAH_STK_TURN[-1]); ay = 3.5
+    bowl = np.array(tr(H_DESC, KH, (262, 342), ay)) + [W[0], W[1] - ay]
+    dot = np.array(tr([(271, 462)], KH, (262, 342), ay))[0] + [W[0], W[1] - ay]
+    return bowl, dot
+
+
+_B, _D = _hah_fina_stk()
+CUSTOM['hah.fina'] = dict(form='fina', right=6.0, entry_y=STK, strokes=[
+    (HAH_STK_MEDI, False, [False, False]), (HAH_STK_TURN, False, [False, False]), (_B.tolist(), False, [False, True])])
+CUSTOM['jeem.fina'] = dict(CUSTOM['hah.fina'], dots=[tuple(_D)])
+CUSTOM['khah.fina'] = dict(CUSTOM['hah.fina'], dots=[(3.3, STK + 1.35)])
+
+
+
+def _meem_head(cx=1.95, cy=0.78, rx=1.2, ry=0.78, tilt=18):
+    t = np.linspace(0, 2 * np.pi, 64, endpoint=False); a = np.radians(tilt)
+    x, y = rx * np.cos(t), ry * np.sin(t)
+    return np.column_stack([cx + x * np.cos(a) - y * np.sin(a), cy + x * np.sin(a) + y * np.cos(a)]).tolist()
+
+
+# مـ ـمـ : the Ruqʿah meem, a small filled head sitting on the line; the pen leaves from its foot
+CUSTOM['meem.init'] = dict(form='init', heads=[_meem_head()], strokes=[
+    ([(1.55, 0.18), (1.0, 0.03), (0.4, 0.0), (0.0, 0.0)], False, [False, False])])
+# ـمـ ـم stacked, as in the notebook (عملية، العميل): the letter before sits up, one diagonal brings the pen down
+# onto the head, and the pen leaves along the line (medial) or drops into the tail (final).
+MSTK = 3.6
+MEEM_IN = [(5.6, MSTK), (5.0, MSTK - 0.08), (4.45, MSTK - 0.45), (3.75, MSTK - 1.25), (3.15, 1.75), (2.75, 1.35)]
+CUSTOM['meem.medi'] = dict(form='medi', right=4.85, entry_y=MSTK, heads=[_meem_head()], strokes=[
+    ([(1.55, 0.18), (1.0, 0.03), (0.4, 0.0), (0.0, 0.0)], False, [False, False]),
+    (MEEM_IN, False, [False, False])])
+_MF = 2.6                                          # final: the same meem moved right to make room for the tail
+CUSTOM['meem.fina'] = dict(form='fina', right=4.85 + _MF, entry_y=MSTK, heads=[_meem_head(cx=1.95 + _MF)], strokes=[
+    ([(x + _MF, y) for x, y in MEEM_IN], False, [False, False]),
+    ([(1.4 + _MF, 0.2), (0.75 + _MF, -0.55), (1.6, -1.9), (0.95, -3.3), (0.7, -4.4), (1.0, -5.1), (1.75, -5.35), (2.55, -5.2)],
+     False, [False, True])])
 
 
 def _from_redraw(fn, k, stem=None, form='medi'):
@@ -299,8 +361,10 @@ def custom_glyph(name):
     st = [dict(p=np.array(p, float) * [WX, 1], closed=cl, free=list(fr)) for p, cl, fr in c['strokes']]
     for s in st: s['q'] = rail(fit(s['p'], s['closed'], eps=0.05), s['closed'])
     sides = SIDES.get(c['form'], ())
-    return dict(strokes=st, heads=[], dots=[np.array(d) * [WX, 1] for d in c.get('dots', [])], left=-EXT if 'left' in sides else None,
-                right=c['right'] * WX + EXT if 'right' in sides else None, form=c['form'], side=None)
+    return dict(strokes=st, heads=[np.array(h, float) * [WX, 1] for h in c.get('heads', [])],
+                dots=[np.array(d) * [WX, 1] for d in c.get('dots', [])], left=-EXT if 'left' in sides else None,
+                right=c['right'] * WX + EXT if 'right' in sides else None, form=c['form'], side=None,
+                entry_y=c.get('entry_y', 0.0))
 
 
 TOOTH = ('teh', 'theh', 'noon', 'yeh')                # Ruqʿah: these share one tooth with ب, only the dots differ
@@ -314,9 +378,11 @@ def shared_tooth(D, name, base_name=None):
     base_name = base_name or 'beh.' + form
     base = custom_glyph(base_name) if base_name in CUSTOM else rebuild_glyph(D['glyphs'][base_name], base_name)
     own = rebuild_glyph(D['glyphs'][name], name)
-    is_mark = lambda p: p[:, 1].min() > 1.3 or p[:, 1].max() < -0.8
+    is_mark = lambda p: p[:, 1].min() > 1.3 or p[:, 1].max() < -0.45
     body = [s for s in base['strokes'] if not is_mark(s['q'])]
     marks = [s for s in own['strokes'] if is_mark(s['q'])]
+    for s in marks:                                # dots below hang at one depth under every tooth
+        if s['q'][:, 1].max() < 0: s['q'] = s['q'] + [0, -1.35 - s['q'][:, 1].mean()]
     B = np.vstack([s['q'] for s in body])
     tx = B[:, 0][B[:, 1] > 0.45].mean() if (B[:, 1] > 0.45).any() else B[:, 0].mean()
     pts = [s['q'] for s in marks] + [np.array(own['dots']).reshape(-1, 2)]
@@ -336,6 +402,8 @@ def run(inp='stage2r.pkl', out='stage3.pkl', only=None):
             G = shared_tooth(D, name, SHARE[name])
         else:
             G = custom_glyph(name) if name in CUSTOM else rebuild_glyph(g, name)
+        if name.split('.')[0] in TOOTH + ('beh',) and g['form'] in ('init', 'medi'):
+            G['dots'] = [np.array([d[0], -1.35]) if d[1] < 0 else d for d in G['dots']]
         D['glyphs'][name] = render(G)
         print('.', end='', flush=True)
     print()

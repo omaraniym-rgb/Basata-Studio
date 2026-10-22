@@ -72,14 +72,17 @@ def main(stage2='stage3.pkl', out='OmarHand'):
     U = ALEF_UNITS / (alef_u * R_W)
     glyphs, adv, cmap = {}, {}, {}
     anchors = {}
+    curs = {}
     # letters
     for name, g in G.items():
         if g['form'] == 'mark':
             continue
         img = g['img'].copy()
         sides = SIDES.get(g['form'], ()) or (('right',) if name == 'lamalef.fina' else ())
-        for sd in sides:
-            seam(img, g['left'] if sd == 'left' else g['right'], sd, g['base'], T_JOIN, R_W)
+        ey = g.get('entry_y', 0.0) or 0.0
+        for sd in sides:                       # a stacked entry joins up at its own height
+            seam(img, g['left'] if sd == 'left' else g['right'], sd, g['base'] - (ey * R_W if sd == 'right' else 0), T_JOIN, R_W)
+        curs[name] = ('right' in sides, 'left' in sides, ey)
         g['img'] = img
         ys_, xs_ = np.where(img); g['ink'] = (xs_.min(), ys_.min(), xs_.max(), ys_.max())
         glyphs[name] = glyph_from_img(img, g['left'], g['base'], U)
@@ -104,6 +107,7 @@ def main(stage2='stage3.pkl', out='OmarHand'):
         img, l, r, base = synth(sh, U)
         if sh.get('join'):
             seam(img, l, 'left', base, T_JOIN, R_W); seam(img, r, 'right', base, T_JOIN, R_W)
+            curs[name] = (True, True, 0.0)
         if sh.get('mark'):
             k = 0.62; img = cv2.resize(img.astype(np.uint8), None, fx=k, fy=k, interpolation=cv2.INTER_AREA) > 0
             ys, xs = np.where(img); cx, cy = (xs.min() + xs.max()) / 2, (ys.min() + ys.max()) / 2
@@ -160,6 +164,15 @@ def main(stage2='stage3.pkl', out='OmarHand'):
     fea += 'feature mark {\n' + ''.join(
         f'  pos base {n} <anchor {anchors[n]["top"][0]} {anchors[n]["top"][1]}> mark @TOP <anchor {anchors[n]["bottom"][0]} {anchors[n]["bottom"][1]}> mark @BOTTOM;\n'
         for n in bases) + '} mark;\n'
+    # cursive attachment: every join lands exactly on the next letter's entry; a stacked entry lifts the letters before
+    rows = []
+    for n, (ent, ex, ey) in sorted(curs.items()):
+        if n not in glyphs: continue
+        e = f'<anchor {adv[n]} {round(ey * R_W * U)}>' if ent else '<anchor NULL>'
+        x = '<anchor 0 0>' if ex else '<anchor NULL>'
+        rows.append(f'  pos cursive {n} {e} {x};')
+    fea += 'lookup CURS { lookupflag RightToLeft IgnoreMarks;\n' + '\n'.join(rows) + '\n} CURS;\n'
+    fea += 'feature curs { script arab; lookup CURS; } curs;\n'
     fea += 'table GDEF { GlyphClassDef [' + ' '.join(sorted(set(n for n in bases + [s for s in SHAPES if not SHAPES[s].get("mark")] + ['space']))) + '], , [' + ' '.join(ALL_MARKS) + '], ; } GDEF;\n'
     addOpenTypeFeaturesFromString(fb.font, fea)
     fb.save(out + '.ttf')
